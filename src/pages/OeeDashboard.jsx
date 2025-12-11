@@ -47,11 +47,11 @@ function OeeDashboard() {
     <div className="oee-root">
       <div className="oee-toolbar">
         <div className="oee-header-row">
-          <div className="oee-title">OEE, Linkou Board, SMT</div>
+          <div className="oee-title oee-range-btn-box">OEE, Linkou Board, SMT</div>
         </div>
         <div
           ref={timeTypeRef}
-          className={`oee-filter-btn ${timeTypeOpen ? "active" : ""}`}
+          className={`oee-filter-btn oee-range-btn-box ${timeTypeOpen ? "active" : ""}`}
           onClick={() => setTimeTypeOpen(!timeTypeOpen)}
         >
           <span className="oee-filter-icon">⏳</span>
@@ -84,7 +84,7 @@ function OeeDashboard() {
 
         <div
           ref={rangeRef}
-          className={`oee-range-btn ${rangeOpen ? "active" : ""}`}
+          className={`oee-range-btn oee-range-btn-box ${rangeOpen ? "active" : ""}`}
           onClick={() => setRangeOpen(!rangeOpen)}
         >
           <span className="oee-range-label">{range}</span>
