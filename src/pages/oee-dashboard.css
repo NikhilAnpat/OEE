@@ -285,8 +285,7 @@
 .oee-table-table {
   width: 100%;
   border-collapse: collapse;
-  table-layout: fixed;
-  min-width: 900px;
+  table-layout: auto;
 }
 thead{
       height: 4vh;
