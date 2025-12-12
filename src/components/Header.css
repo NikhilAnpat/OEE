@@ -6,12 +6,12 @@
   background-color: #1a1a1a;
   border-bottom: 2px solid #646cff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
-  max-height: 40vh;
-  min-height: 8vh;
-  overflow: auto;
+  left: 0;
+  right: 0;
+  height: 10vh; /* matches App.css header space */
+  z-index: 500;
 }
 
 .header-left {

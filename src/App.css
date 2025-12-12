@@ -1,20 +1,21 @@
 .app {
-  min-height: 100vh;
+  height: 100vh;              
   display: flex;
   flex-direction: column;
   background-color: #1a1a1a;
+  padding-top: 10vh;            
+  overflow: hidden;            
 }
 
 .app-body {
   display: flex;
   flex: 1;
-  min-height: calc(100vh - 80px);
+  overflow: hidden;            
 }
-
 .main-content {
   flex: 1;
   background-color: #1a1a1a;
-  overflow-y: auto;
+  overflow-y: auto;           
 }
 .nav-backdrop {
   position: fixed;
@@ -28,19 +29,7 @@
   .nav-backdrop { display: none; }
 }
 
-/* Desktop: disable vertical scrolling */
-@media (min-width: 1025px) {
-  html, body, #root {
-    overflow-y: hidden;
-    overscroll-behavior-y: none;
-  }
 
-  .main-content {
-    overflow-y: hidden;
-  }
-}
-
-/* Prevent horizontal scrolling on small screens */
 html, body, #root {
   overflow-x: hidden;
 }
