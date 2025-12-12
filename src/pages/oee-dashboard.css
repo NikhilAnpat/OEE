@@ -307,9 +307,8 @@ tr{
 .oee-table-table td {
   padding: 1vh 1vw;
   border-bottom: 1px solid #0b1220;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
   font-size: 1.5vh;
   vertical-align: middle;
   text-align: left;
