@@ -29,7 +29,7 @@
 }
 
 /* Desktop: disable vertical scrolling */
-@media (min-width: 769px) {
+@media (min-width: 1025px) {
   html, body, #root {
     overflow-y: hidden;
     overscroll-behavior-y: none;
