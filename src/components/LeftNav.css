@@ -9,6 +9,15 @@
   gap: 0.5vh;
   box-sizing: border-box;
 }
+
+/* Desktop: allow collapsing the nav when toggle is used */
+.left-nav.closed {
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 .nav-group {
   display: flex;
   flex-direction: column;
@@ -72,12 +81,10 @@
 }
 @media (max-width: 768px) {
   .left-nav {
-    position: fixed;
     left: 0;
     top: 0;
-    height: 100vh;
+    height: 100%;
     width: 260px;
-    padding: 48px 12px 12px;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
     z-index: 300;
