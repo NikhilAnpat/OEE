@@ -1,0 +1,134 @@
+/* ROOT THEMES */
+.emd-root {
+  padding: 2vh 2vw;
+  min-height: 100vh;
+  transition: background 0.3s, color 0.3s;
+  font-family: Arial, sans-serif;
+}
+
+/* LIGHT */
+.emd-root.light {
+  background: #f9fafb;
+  color: #111827;
+}
+
+/* DARK */
+.emd-root.dark {
+  background: #020617;
+  color: #f9fafb;
+}
+
+/* TOP BAR */
+.emd-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2vh;
+}
+
+.emd-breadcrumb {
+  font-size: 1.8vh;
+  font-weight: 600;
+}
+
+/* TOGGLE */
+.emd-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.6vw;
+}
+
+.switch {
+  position: relative;
+  width: 40px;
+  height: 20px;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  top: 2px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(20px);
+}
+
+/* GRID */
+.emd-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.2vw;
+}
+
+/* CARD */
+.emd-card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.4vh 1.2vw;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.emd-root.dark .emd-card {
+  background: #0f172a;
+}
+
+/* LARGE CARD */
+.emd-card.large {
+  grid-column: span 2;
+}
+
+/* STATS */
+.emd-card.stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.emd-card.stat h2 {
+  font-size: 3vh;
+  margin-top: 0.5vh;
+}
+
+.emd-card.stat span {
+  font-size: 1.6vh;
+}
+
+.red {
+  color: #dc2626;
+}
+
+.green {
+  color: #16a34a;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1024px) {
+  .emd-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .emd-grid {
+    grid-template-columns: 1fr;
+  }
+}

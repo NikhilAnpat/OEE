@@ -10,6 +10,10 @@ import MachineDashboard from './pages/MachineDashboard';
 import OeeDashboard from './pages/OeeDashboard';
 import Report from './pages/Report';
 import EnergyConsumption from './pages/EnergyConsumption';
+import EnergyMonitoringDashboard from './pages/EnergyMonitoringDashboard/EnergyMonitoringDashboard';
+import Alerts from './pages/Alerts/Alerts';
+import EventData from './pages/EventData/EventData';
+import AlertSetup from './pages/AlertSetup/AlertSetup';
 import './App.css';
 
 function App() {
@@ -62,6 +66,11 @@ function App() {
               <Route path="/oee-dashboard" element={<OeeDashboard />} />
               <Route path="/report" element={<Report />} />
               <Route path="/energy-consumption" element={<EnergyConsumption />} />
+              <Route path="/energy-monitoring-dashboard" element={<EnergyMonitoringDashboard />} />
+              <Route path="/alerts" element={<Alerts />} />
+              <Route path="/alert-setup" element={<AlertSetup />} />
+              <Route path="/event-data" element={<EventData />} />  
+
             </Routes>
           </main>
         </div>

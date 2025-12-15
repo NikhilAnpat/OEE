@@ -95,6 +95,10 @@ function LeftNav({ isNavOpen = true, setIsNavOpen, isMobile = false }) {
           className={({ isActive }) => `nav-button sub ${isActive ? "active" : ""}`}>
           Alert Setup
         </NavLink>
+        <NavLink to="/report" onClick={handleLinkClick}
+          className={({ isActive }) => `nav-button sub ${isActive ? "active" : ""}`}>
+          Report
+        </NavLink>
       </NavDropdown>
 
     </nav>
