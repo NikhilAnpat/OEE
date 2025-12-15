@@ -142,12 +142,12 @@
 }
 
 .emd-card.kpi p {
-  font-size: 1vh;
+  font-size: 2vh;
   color: var(--muted-text);
 }
 
 .emd-card.kpi h2 {
-  font-size: 1.5vh;
+  font-size: 2vh;
   margin-top: 4px;
 }
 
