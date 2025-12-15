@@ -8,9 +8,9 @@
   flex-direction: column;
   gap: 0.5vh;
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
-/* Desktop: allow collapsing the nav when toggle is used */
 .left-nav.closed {
   width: 0;
   min-width: 0;

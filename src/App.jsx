@@ -12,6 +12,7 @@ import Report from './pages/Report';
 import EnergyConsumption from './pages/EnergyConsumption';
 import EnergyMonitoringDashboard from './pages/EnergyMonitoringDashboard/EnergyMonitoringDashboard';
 import Alerts from './pages/Alerts/Alerts';
+import PowerQualityMonitoring from './pages/PowerQualityMonitoring/powerQualityMonitoring';
 import EventData from './pages/EventData/EventData';
 import AlertSetup from './pages/AlertSetup/AlertSetup';
 import './App.css';
@@ -67,6 +68,7 @@ function App() {
               <Route path="/report" element={<Report />} />
               <Route path="/energy-consumption" element={<EnergyConsumption />} />
               <Route path="/energy-monitoring-dashboard" element={<EnergyMonitoringDashboard />} />
+              <Route path="/power-quality-monitoring" element={<PowerQualityMonitoring />} />
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/alert-setup" element={<AlertSetup />} />
               <Route path="/event-data" element={<EventData />} />  

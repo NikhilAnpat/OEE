@@ -76,7 +76,7 @@ function LeftNav({ isNavOpen = true, setIsNavOpen, isMobile = false }) {
           Energy Monitoring Dashboard
         </NavLink>
 
-        <NavLink to="/power-quality" onClick={handleLinkClick}
+        <NavLink to="/power-quality-monitoring" onClick={handleLinkClick}
           className={({ isActive }) => `nav-button sub ${isActive ? "active" : ""}`}>
           Power Quality Monitoring Dashboard
         </NavLink>
@@ -99,7 +99,7 @@ function LeftNav({ isNavOpen = true, setIsNavOpen, isMobile = false }) {
           className={({ isActive }) => `nav-button sub ${isActive ? "active" : ""}`}>
           Report
         </NavLink>
-      </NavDropdown>
+ </NavDropdown>
 
     </nav>
   );
