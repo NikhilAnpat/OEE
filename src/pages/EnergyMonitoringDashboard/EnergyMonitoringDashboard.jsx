@@ -10,32 +10,105 @@ export default function EnergyMonitoringDashboard() {
   const pieRef = useRef(null);
 
   useEffect(() => {
+    const isDark = theme === "dark";
+
+    const commonLabelColor = isDark ? "#e5e7eb" : "#374151";
+    const gridColor = isDark ? "rgba(255,255,255,0.15)" : "#e5e7eb";
+
     const line = new ApexCharts(lineRef.current, {
-      chart: { type: "line", height: "100%", toolbar: { show: false } },
+      chart: {
+        type: "line",
+        height: "100%",
+        toolbar: { show: false },
+        foreColor: commonLabelColor
+      },
+
+      theme: {
+        mode: isDark ? "dark" : "light"
+      },
+
+      tooltip: {
+        theme: isDark ? "dark" : "light"
+      },
+
       series: [
         { name: "WBSEDCL Line", data: [1.1, 1.3, 1.45, 1.4, 1.35, 1.5, 1.42] },
         { name: "Generator", data: [0, 0, 0, 0, 0, 0, 0] }
       ],
+
       xaxis: {
-        categories: ["07:30", "08:30", "09:30", "10:30", "11:30", "12:30", "13:00"]
+        categories: ["07:30", "08:30", "09:30", "10:30", "11:30", "12:30", "13:00"],
+        labels: {
+          style: {
+            colors: commonLabelColor
+          }
+        }
       },
+
+      yaxis: {
+        labels: {
+          style: {
+            colors: commonLabelColor
+          }
+        }
+      },
+
+      grid: {
+        borderColor: gridColor
+      },
+
       stroke: { width: 3 },
-      colors: ["#6aa84f", "#f1c232"],
-      grid: { borderColor: "#e5e7eb" }
+      colors: ["#6aa84f", "#f1c232"]
     });
 
     const bar = new ApexCharts(barRef.current, {
-      chart: { type: "bar", stacked: true, height: 260, toolbar: { show: false } },
+      chart: {
+        type: "bar",
+        stacked: true,
+        height: 260,
+        toolbar: { show: false },
+        foreColor: commonLabelColor
+      },
+
+      theme: {
+        mode: isDark ? "dark" : "light"
+      },
+
+      tooltip: {
+        theme: isDark ? "dark" : "light"
+      },
+
       series: [
         { name: "Grid", data: [1.4, 1.35, 1.38, 1.3, 1.42] },
         { name: "Generator", data: [0.8, 0.85, 0.9, 0.8, 0.95] }
       ],
-      xaxis: { categories: ["09:00", "10:00", "11:00", "12:00", "13:00"] },
+
+      xaxis: {
+        categories: ["09:00", "10:00", "11:00", "12:00", "13:00"]
+      },
+
+      grid: {
+        borderColor: gridColor
+      },
+
       colors: ["#6aa84f", "#cc0000"]
     });
 
     const pie = new ApexCharts(pieRef.current, {
-      chart: { type: "pie", height: 260 },
+      chart: {
+        type: "pie",
+        height: 260,
+        foreColor: commonLabelColor
+      },
+
+      theme: {
+        mode: isDark ? "dark" : "light"
+      },
+
+      tooltip: {
+        theme: isDark ? "dark" : "light"
+      },
+
       series: [56, 28, 6, 10],
       labels: ["Satake", "Miltech", "Compressor", "Boiler"],
       colors: ["#6aa84f", "#cc0000", "#3d85c6", "#f1c232"]
@@ -50,7 +123,7 @@ export default function EnergyMonitoringDashboard() {
       bar.destroy();
       pie.destroy();
     };
-  }, []);
+  }, [theme]);
 
   return (
     <section
@@ -99,6 +172,7 @@ export default function EnergyMonitoringDashboard() {
           </div>
         </div>
       </div>
+
       <div className="emd-top-row">
         <div className="emd-card power-card">
           <h3>Power Consumption (WBSEDCL Line vs Generator)</h3>
@@ -137,6 +211,7 @@ export default function EnergyMonitoringDashboard() {
           </div>
         </div>
       </div>
+
       <div className="emd-grid">
         <div className="emd-card span-2">
           <h3>Hourly Segment Wise Energy Consumption</h3>
