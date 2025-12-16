@@ -1,0 +1,272 @@
+.alert-h1 {
+  font-size: 2.5vh;
+  color: var(--text-main);
+}
+
+.eemd-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5vw;
+  justify-content: flex-end;
+  /* Use flexbox for alignment instead of margin-left 90% */
+  margin-bottom: 2vh;
+}
+
+.sun-symbol {
+  color: #000000;
+  font-size: 2vh;
+}
+
+.switch {
+  position: relative;
+  width: 40px;
+  /* Keep toggle switch fixed size for usability */
+  height: 20px;
+}
+
+.switch input {
+  display: none;
+}
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background-color: #ccc;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.slider::before {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 2px;
+  top: 2px;
+  background-color: #ffffff;
+  border-radius: 50%;
+  transition: transform 0.25s ease;
+}
+
+.switch input:checked+.slider::before {
+  transform: translateX(20px);
+}
+
+.alert-setup-container {
+  --bg-main: #f9fafb;
+  --text-main: #111827;
+  --card-bg: #ffffff;
+  --border-color: #374151;
+  --input-bg: #ffffff;
+  --shadow: 0 0.4vh 1.2vh rgba(0, 0, 0, 0.08);
+
+  padding: 3vh 2vw;
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.active-alert-section {
+  height: auto;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.meter-container {
+  margin: 1.5vh auto;
+}
+
+.meter-row {
+  color: var(--text-main);
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.8vh 1vw;
+  margin-bottom: 0.8vh;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  /* Added for robustness */
+  gap: 1vh;
+}
+
+.meter-text {
+  font-size: 1.8vh;
+  flex: 1;
+  min-width: 200px;
+}
+
+.meter-actions {
+  display: flex;
+  gap: 0.5vw;
+}
+
+.btn {
+  border: none;
+  cursor: pointer;
+  padding: 0.5vh 0.8vw;
+  border-radius: 4px;
+  font-size: 1.6vh;
+}
+
+.btn.edit {
+  background-color: #38bdf8;
+  color: #000;
+}
+
+.btn.delete {
+  background-color: #ef4444;
+  color: #fff;
+}
+
+.alert-card {
+  width: 100%;
+  max-width: 90vw;
+  /* Fluid max-width */
+  margin: 2vh auto;
+  padding: 2vh 1.5vw;
+  /* Fluid padding */
+  background-color: var(--card-bg);
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+  box-sizing: border-box;
+}
+
+.alert-form {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5vw;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6vh;
+  width: 100%;
+}
+
+.form-group label {
+  font-size: 1.6vh;
+  color: var(--text-main);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  height: 4.5vh;
+  /* Fluid height */
+  padding: 0 0.8vw;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  font-size: 1.6vh;
+  color: var(--text-main);
+  background-color: var(--input-bg);
+  box-sizing: border-box;
+}
+
+.form-group input[type="text"] {
+  width: 100%;
+}
+
+.btn-wrapper {
+  margin-top: 2.5vh;
+  text-align: center;
+}
+
+.save-btn {
+  background-color: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 0.8vh 1.5vw;
+  font-size: 1.8vh;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-card {
+  background: var(--card-bg);
+  padding: 2.5vh 2vw;
+  border-radius: 12px;
+  width: 50vh;
+  /* Using vh relative width for safe modal */
+  max-width: 90vw;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1vw;
+  margin-top: 2.5vh;
+}
+
+@media (max-width: 1024px) {
+  .meter-container {
+    width: 100%;
+  }
+
+  .alert-form {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .alert-setup-container {
+    padding: 2vh 3vw;
+  }
+
+  .alert-h1 {
+    font-size: 2.4vh;
+  }
+
+  .meter-container {
+    width: 100%;
+    margin: 1vh 0;
+  }
+
+  .alert-form {
+    grid-template-columns: 1fr;
+    gap: 1.5vh;
+  }
+
+  .alert-card {
+    padding: 2vh 3vw;
+  }
+
+  .meter-text {
+    font-size: 1.6vh;
+  }
+
+  .btn {
+    font-size: 1.6vh;
+  }
+
+  .form-group input[type="text"] {
+    min-height: 5vh;
+    font-size: 1.8vh;
+  }
+
+  .save-btn {
+    width: 100%;
+    padding: 1.2vh 0;
+    font-size: 2vh;
+  }
+}
