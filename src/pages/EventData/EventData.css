@@ -1,0 +1,154 @@
+.event-data-h1 {
+    font-size: 3vh;
+    margin-left: 1vw;
+    color: var(--text-main);
+}
+
+.filter-bar {
+    display: flex;
+    gap: 1.5vh;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    background: linear-gradient(180deg, #243447, #1b2a38);
+    padding: 1.5vh 1.5vw;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 2.5vh;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6vh;
+    flex: 1 1 20vw;
+    /* Fluid basis */
+    min-width: 200px;
+    max-width: 400px;
+    /* Cap width for very large screens */
+}
+
+.filter-group label {
+    font-size: 1.6vh;
+    color: #cbd5e1;
+}
+
+.filter-group select,
+.filter-group input {
+    width: 100%;
+    height: 4.5vh;
+    padding: 0 1vw;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background: #ffffff;
+    color: #111827;
+    font-size: 1.6vh;
+    box-sizing: border-box;
+}
+
+.filter-btn {
+    flex: 1 1 20vw;
+    min-width: 200px;
+    max-width: 400px;
+    height: 4.5vh;
+    padding: 0 1.5vw;
+    background: #0d6efd;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.6vh;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.filter-btn:hover {
+    background: #0b5ed7;
+}
+
+.table-wrapper {
+    background: var(--card-bg);
+    border-radius: 12px;
+    overflow-x: auto;
+    border: 1px solid var(--border-color);
+    max-height: 60vh;
+    /* Allow scrolling */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: var(--card-bg);
+    border-bottom: 2px solid var(--border-color);
+}
+
+th,
+td {
+    padding: 1vh 1vw;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 1.6vh;
+    text-align: left;
+    color: var(--text-main);
+    white-space: nowrap;
+}
+
+tbody tr:hover {
+    background: var(--input-bg);
+}
+
+/* Tablet: 2 columns */
+@media (max-width: 1024px) {
+    .filter-bar {
+        justify-content: flex-start;
+    }
+
+    .filter-group {
+        /* gap is 1.5vh approx, use percentage calc safely */
+        flex: 0 0 48%;
+        /* Fallback */
+        flex: 0 0 calc(50% - 1vw);
+        /* Assuming gap is handled usually via manual margin or gap prop */
+        min-width: calc(50% - 1vw);
+        max-width: calc(50% - 1vw);
+    }
+
+    .filter-btn {
+        flex: 0 0 calc(50% - 1vw);
+        min-width: calc(50% - 1vw);
+        max-width: calc(50% - 1vw);
+    }
+}
+
+/* Mobile: 1 column */
+@media (max-width: 768px) {
+    .event-data-h1 {
+        font-size: 2.5vh;
+        margin-left: 0;
+    }
+
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.5vh;
+    }
+
+    .filter-group,
+    .filter-btn {
+        flex: 1 1 100%;
+        min-width: 100%;
+        max-width: 100%;
+    }
+
+    .filter-btn {
+        height: 5vh;
+        font-size: 1.8vh;
+    }
+
+    th,
+    td {
+        font-size: 1.4vh;
+        padding: 0.8vh 0.8vw;
+    }
+}
