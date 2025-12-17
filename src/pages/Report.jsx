@@ -34,24 +34,24 @@ function Report() {
       </div>
 
 
-      <div class="live-header">
-        <div class="breadcrumb">
+      <div className="live-header">
+        <div className="breadcrumb">
           Live <span>›</span> Instantaneous Data
         </div>
 
-        <div class="header-actions">
-          <select class="cluster-select">
+        <div className="header-actions">
+          <select className="cluster-select">
             <option>cluster2</option>
             <option>cluster1</option>
           </select>
 
-          <button class="export-btn">Export</button>
+          <button className="export-btn">Export</button>
         </div>
       </div>
 
 
-      <div class="live-table-wrapper">
-        <table class="live-table">
+      <div className="live-table-wrapper">
+        <table className="live-table">
           <thead>
             <tr>
               <th>Meter No</th>
@@ -78,8 +78,8 @@ function Report() {
               <td>HT Furnace A</td>
               <td>27 Feb 25</td>
               <td>16:48:21</td>
-              <td><span class="badge off">E1</span></td>
-              <td><span class="badge critical">Critical</span></td>
+              <td><span className="badge off">E1</span></td>
+              <td><span className="badge critical">Critical</span></td>
               <td>244.41</td>
               <td>245.23</td>
               <td>243.53</td>
@@ -96,8 +96,8 @@ function Report() {
               <td>Main Power</td>
               <td>01 Mar 25</td>
               <td>15:04:56</td>
-              <td><span class="badge on">ON</span></td>
-              <td><span class="badge normal">Normal</span></td>
+              <td><span className="badge on">ON</span></td>
+              <td><span className="badge normal">Normal</span></td>
               <td>239.17</td>
               <td>239.77</td>
               <td>239.25</td>
@@ -114,8 +114,8 @@ function Report() {
               <td>HT Furnace B</td>
               <td>01 Mar 25</td>
               <td>15:04:58</td>
-              <td><span class="badge on">ON</span></td>
-              <td><span class="badge normal">Normal</span></td>
+              <td><span className="badge on">ON</span></td>
+              <td><span className="badge normal">Normal</span></td>
               <td>241.39</td>
               <td>240.32</td>
               <td>241.89</td>
@@ -132,8 +132,8 @@ function Report() {
               <td>Compressor</td>
               <td>01 Mar 25</td>
               <td>15:05:21</td>
-              <td><span class="badge on">ON</span></td>
-              <td><span class="badge normal">Normal</span></td>
+              <td><span className="badge on">ON</span></td>
+              <td><span className="badge normal">Normal</span></td>
               <td>240.27</td>
               <td>237.82</td>
               <td>237.50</td>
@@ -149,8 +149,8 @@ function Report() {
               <td>Compressor</td>
               <td>01 Mar 25</td>
               <td>15:05:21</td>
-              <td><span class="badge off">E1</span></td>
-              <td><span class="badge critical">Critical</span></td>
+              <td><span className="badge off">E1</span></td>
+              <td><span className="badge critical">Critical</span></td>
               <td>240.27</td>
               <td>237.82</td>
               <td>237.50</td>
@@ -166,8 +166,8 @@ function Report() {
               <td>Compressor</td>
               <td>01 Mar 25</td>
               <td>15:05:21</td>
-              <td><span class="badge on">ON</span></td>
-              <td><span class="badge normal">Normal</span></td>
+              <td><span className="badge on">ON</span></td>
+              <td><span className="badge normal">Normal</span></td>
               <td>240.27</td>
               <td>237.82</td>
               <td>237.50</td>
@@ -183,8 +183,8 @@ function Report() {
               <td>Compressor</td>
               <td>01 Mar 25</td>
               <td>15:05:21</td>
-              <td><span class="badge off">E1</span></td>
-              <td><span class="badge critical">Critical</span></td>
+              <td><span className="badge off">E1</span></td>
+              <td><span className="badge critical">Critical</span></td>
               <td>240.27</td>
               <td>237.82</td>
               <td>237.50</td>
@@ -200,8 +200,8 @@ function Report() {
               <td>Compressor</td>
               <td>01 Mar 25</td>
               <td>15:05:21</td>
-              <td><span class="badge on">ON</span></td>
-              <td><span class="badge normal">Normal</span></td>
+              <td><span className="badge on">ON</span></td>
+              <td><span className="badge normal">Normal</span></td>
               <td>240.27</td>
               <td>237.82</td>
               <td>237.50</td>
@@ -217,8 +217,8 @@ function Report() {
               <td>Compressor</td>
               <td>01 Mar 25</td>
               <td>15:05:21</td>
-              <td><span class="badge off">E1</span></td>
-              <td><span class="badge normal">Normal</span></td>
+              <td><span className="badge off">E1</span></td>
+              <td><span className="badge normal">Normal</span></td>
               <td>240.27</td>
               <td>237.82</td>
               <td>237.50</td>
@@ -234,8 +234,8 @@ function Report() {
               <td>Compressor</td>
               <td>01 Mar 25</td>
               <td>15:05:21</td>
-              <td><span class="badge on">ON</span></td>
-              <td><span class="badge critical">Critical</span></td>
+              <td><span className="badge on">ON</span></td>
+              <td><span className="badge critical">Critical</span></td>
               <td>240.27</td>
               <td>237.82</td>
               <td>237.50</td>
@@ -251,8 +251,8 @@ function Report() {
               <td>Compressor</td>
               <td>01 Mar 25</td>
               <td>15:05:21</td>
-              <td><span class="badge off">E1</span></td>
-              <td><span class="badge normal">Normal</span></td>
+              <td><span className="badge off">E1</span></td>
+              <td><span className="badge normal">Normal</span></td>
               <td>240.27</td>
               <td>237.82</td>
               <td>237.50</td>

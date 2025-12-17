@@ -20,7 +20,7 @@ function Page1() {
       <div className="toggle-container">
         <h2>Digital Status</h2>
         <div className="digital-sections-wrapper">
-          {/* Digital Input Section */}
+   
           <div className="digital-section">
             <h3 className="section-title">Digital Input</h3>
             <div className="digital-inputs-wrapper">
@@ -46,7 +46,7 @@ function Page1() {
             </div>
           </div>
 
-          {/* Digital Output Section */}
+  
           <div className="digital-section">
             <h3 className="section-title">Digital Output</h3>
             <div className="digital-outputs-wrapper">

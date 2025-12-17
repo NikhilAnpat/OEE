@@ -10,13 +10,13 @@
 
 .modal-card {
   background: var(--card-bg);
-  padding: 20px;
+  padding: 0px 20px 0px 21px;
   border-radius: 12px;
   width: 54%;
-  max-width: 90%;
+  max-width: 100%;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow);
-  margin-left: 20%;
+  color: var(--text-main);
 }
 
 .modal-card h2 {
@@ -28,4 +28,15 @@
   justify-content: flex-end;
   gap: 10px;
   margin-top: 20px;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+
+input[type=number] {
+  -moz-appearance: textfield;
 }

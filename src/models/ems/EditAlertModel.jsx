@@ -6,12 +6,22 @@ function EditAlertModal({
     alert,
     onClose,
     onSave,
+    theme
 }) {
     const [editedAlert, setEditedAlert] = useState(null);
+
+    const isEditMode = !!alert;
 
     useEffect(() => {
         if (alert) {
             setEditedAlert({ ...alert });
+        } else {
+            setEditedAlert({
+                meter: "101 - Shop-1",
+                parameter: "AvgVoltage",
+                threshold: "",
+                message: ""
+            });
         }
     }, [alert]);
 
@@ -21,10 +31,28 @@ function EditAlertModal({
         onSave(editedAlert);
     };
 
+    const isChanged =
+        !isEditMode ||
+        (alert &&
+            editedAlert &&
+            (alert.meter !== editedAlert.meter ||
+                alert.parameter !== editedAlert.parameter ||
+                String(alert.threshold) !== String(editedAlert.threshold) ||
+                alert.message !== editedAlert.message));
+
+    const themeStyles = theme === "dark" ? {
+        "--bg-main": "#020617",
+        "--text-main": "#f9fafb",
+        "--card-bg": "#0f172a",
+        "--border-color": "rgba(255,255,255,0.15)",
+        "--input-bg": "#1e293b",
+        "--shadow": "0 4px 12px rgba(0,0,0,0.4)",
+    } : {};
+
     return (
-        <div className="modal-overlay">
+        <div className="modal-overlay" style={themeStyles}>
             <div className="modal-card">
-                <h2>Edit Alert</h2>
+                <h2>{isEditMode ? "Edit Alert" : "Add Alert Rule"}</h2>
 
                 <div className="alert-form">
                     <div className="form-group">
@@ -71,6 +99,7 @@ function EditAlertModal({
                         <label>Threshold</label>
                         <input
                             type="number"
+                            placeholder="Enter Threshold"
                             value={editedAlert.threshold}
                             onChange={(e) =>
                                 setEditedAlert({ ...editedAlert, threshold: e.target.value })
@@ -82,6 +111,7 @@ function EditAlertModal({
                         <label>Message</label>
                         <input
                             type="text"
+                            placeholder="Enter Message"
                             value={editedAlert.message}
                             onChange={(e) =>
                                 setEditedAlert({ ...editedAlert, message: e.target.value })
@@ -94,8 +124,12 @@ function EditAlertModal({
                     <button className="btn delete" onClick={onClose}>
                         Cancel
                     </button>
-                    <button className="save-btn" onClick={handleUpdate}>
-                        Update
+                    <button
+                        className="save-btn"
+                        onClick={handleUpdate}
+                        disabled={!isChanged}
+                    >
+                        {isEditMode ? "Update" : "Save"}
                     </button>
                 </div>
             </div>

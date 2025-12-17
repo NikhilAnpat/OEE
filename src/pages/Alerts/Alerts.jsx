@@ -5,7 +5,7 @@ function Alerts() {
   const [theme, setTheme] = useState("light");
   const [alerts, setAlerts] = useState([]);
 
-  const alertsPerPage = 3;
+  const alertsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
   const loadTriggeredAlerts = () => {
@@ -26,20 +26,18 @@ function Alerts() {
     setAlerts(todayAlerts);
   };
 
-  
   useEffect(() => {
     loadTriggeredAlerts();
 
-    const handleStorageChange = (e) => {
-      if (e.key === "triggeredAlerts") {
-        loadTriggeredAlerts();
-      }
-    };
+    const reload = () => loadTriggeredAlerts();
 
-    window.addEventListener("storage", handleStorageChange);
+
+    window.addEventListener("storage", reload);
+    window.addEventListener("triggered-alert-updated", reload);
 
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("storage", reload);
+      window.removeEventListener("triggered-alert-updated", reload);
     };
   }, []);
 
@@ -60,17 +58,16 @@ function Alerts() {
       style={
         theme === "dark"
           ? {
-              "--bg-main": "#020617",
-              "--text-main": "#f9fafb",
-              "--card-bg": "#0f172a",
-              "--border-color": "rgba(255,255,255,0.15)",
-              "--input-bg": "#1e293b",
-              "--shadow": "0 4px 12px rgba(0,0,0,0.4)",
-            }
+            "--bg-main": "#020617",
+            "--text-main": "#f9fafb",
+            "--card-bg": "#0f172a",
+            "--border-color": "rgba(255,255,255,0.15)",
+            "--input-bg": "#1e293b",
+            "--shadow": "0 4px 12px rgba(0,0,0,0.4)",
+          }
           : {}
       }
     >
-      
       <div className="a-eemd-toggle">
         <span className="a-sun-symbol">☀</span>
         <label className="a-switch">
@@ -85,7 +82,6 @@ function Alerts() {
         <span>🌙</span>
       </div>
 
-      
       <div className="a-alert-container">
         <h1 className="a-alert-h1">Triggered Alerts (Today)</h1>
 
@@ -106,7 +102,6 @@ function Alerts() {
           ))}
         </div>
 
-        
         {alerts.length > alertsPerPage && (
           <div className="pagination">
             <button
@@ -120,9 +115,8 @@ function Alerts() {
             {Array.from({ length: totalPages }, (_, i) => (
               <button
                 key={i}
-                className={`page-btn ${
-                  currentPage === i + 1 ? "active" : ""
-                }`}
+                className={`page-btn ${currentPage === i + 1 ? "active" : ""
+                  }`}
                 onClick={() => setCurrentPage(i + 1)}
               >
                 {i + 1}
