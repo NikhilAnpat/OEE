@@ -1,6 +1,6 @@
 .alert-setup-container {
   padding: 1vh 1.5vw 2vh;
-  min-height: 100vh;
+  min-height: 90vh;
   box-sizing: border-box;
   background-color: var(--bg-main);
   color: var(--text-main);
@@ -26,7 +26,7 @@
 
 .header-actions {
   display: flex;
-  gap: 2vw;
+  gap: 20vw;
   align-items: center;
 }
 
@@ -55,7 +55,7 @@
 
 .live-table-wrapper {
   max-height: 65vh;
-  /* Adjusted for fluid height */
+ 
   overflow: auto;
   border: 1px solid var(--border-color);
   border-radius: 10px;
@@ -67,7 +67,7 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 100%;
-  /* Changed from fixed pixel width to allow fluid */
+  
 }
 
 .live-table thead {
@@ -82,7 +82,7 @@
 .live-table th {
   padding: 1vh 1vw;
   font-size: 2vh;
-  /* Fluid font size */
+ 
   text-align: center;
   border-bottom: 1px solid var(--border-color);
   white-space: nowrap;
@@ -92,7 +92,7 @@
 .live-table td {
   padding: 1vh 1vw;
   font-size: 1.8vh;
-  /* Fluid font size */
+ 
   text-align: center;
   border-bottom: 1px solid var(--border-color);
   white-space: nowrap;
