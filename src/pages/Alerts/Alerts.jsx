@@ -8,37 +8,50 @@ function Alerts() {
   const alertsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
-  const loadTriggeredAlerts = () => {
-    const triggeredAlerts = localStorage.getItem("triggeredAlerts");
-    if (!triggeredAlerts) {
-      setAlerts([]);
-      return;
-    }
+  const generateDummyAlerts = () => {
+    const alertMessages = [
+      { message: "Machine M1 - OEE dropped below 70%", severity: "critical" },
+      { message: "Machine M2 - Availability below threshold", severity: "warning" },
+      { message: "Machine M3 - Performance degradation detected", severity: "warning" },
+      { message: "Machine M4 - Quality issues detected", severity: "critical" },
+      { message: "Machine M1 - Downtime exceeded 30 minutes", severity: "critical" },
+      { message: "Machine M5 - Production rate below target", severity: "warning" },
+      { message: "Machine M2 - Setup time exceeded limit", severity: "info" },
+      { message: "Machine M6 - Minor stop detected", severity: "info" },
+      { message: "Machine M3 - Speed loss detected", severity: "warning" },
+      { message: "Machine M7 - Defect rate increased", severity: "critical" },
+      { message: "Machine M4 - Cycle time variance detected", severity: "warning" },
+      { message: "Machine M8 - Operator intervention required", severity: "info" },
+      { message: "Machine M1 - Temperature threshold exceeded", severity: "critical" },
+      { message: "Machine M9 - Maintenance required", severity: "warning" },
+      { message: "Machine M2 - Tool change needed", severity: "info" },
+      { message: "Machine M10 - Material shortage detected", severity: "critical" },
+      { message: "Machine M3 - Energy consumption spike", severity: "warning" },
+      { message: "Machine M5 - Scrap rate increased", severity: "critical" },
+      { message: "Machine M6 - Idle time exceeded", severity: "warning" },
+      { message: "Machine M7 - Shift target not met", severity: "info" }
+    ];
 
-    const allAlerts = JSON.parse(triggeredAlerts);
-    const today = new Date().toDateString();
+    const now = new Date();
+    const dummyAlerts = alertMessages.map((alert, index) => {
+      const timestamp = new Date(now);
+      timestamp.setHours(8 + Math.floor(index / 2));
+      timestamp.setMinutes(Math.floor(Math.random() * 60));
+      timestamp.setSeconds(Math.floor(Math.random() * 60));
 
-    const todayAlerts = allAlerts.filter((alert) => {
-      const alertDate = new Date(alert.timestamp).toDateString();
-      return alertDate === today;
+      return {
+        id: `alert-${index + 1}`,
+        message: alert.message,
+        severity: alert.severity,
+        timestamp: timestamp.toISOString()
+      };
     });
 
-    setAlerts(todayAlerts);
+    return dummyAlerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   };
 
   useEffect(() => {
-    loadTriggeredAlerts();
-
-    const reload = () => loadTriggeredAlerts();
-
-
-    window.addEventListener("storage", reload);
-    window.addEventListener("triggered-alert-updated", reload);
-
-    return () => {
-      window.removeEventListener("storage", reload);
-      window.removeEventListener("triggered-alert-updated", reload);
-    };
+    setAlerts(generateDummyAlerts());
   }, []);
 
   const totalPages = Math.ceil(alerts.length / alertsPerPage);
