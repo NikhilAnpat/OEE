@@ -49,6 +49,7 @@ function Header({ isNavOpen, setIsNavOpen }) {
 
       <div className="header-right">
 
+           
          <span className="icon" onClick={toggleFullscreen}>
           <img
             src={expand}
@@ -56,6 +57,9 @@ function Header({ isNavOpen, setIsNavOpen }) {
             title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
           />
         </span>
+           <span className="icon" onClick={toggleNotification}>
+          <img src={notification} alt="Notification" />
+        </span>    
         <span className="icon" style={{cursor:"disabled"}} >
           TASK
         </span>
