@@ -1,10 +1,36 @@
+import { useState } from "react";
 import "./Header.css";
 import expand from "../assets/expand.png";
 import notification from "../assets/notification.png";
 import profile from "../assets/user.png";
+import NotificationPopup from "./NotificationPopup";
+import ProfilePopup from "./ProfilePopup";
 
 function Header({ isNavOpen, setIsNavOpen }) {
   const toggle = () => setIsNavOpen((prev) => !prev);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleNotification = () => {
+    setIsNotificationOpen((prev) => !prev);
+    setIsProfileOpen(false); 
+  };
+
+  const toggleProfile = () => {
+    setIsProfileOpen((prev) => !prev);
+    setIsNotificationOpen(false); 
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
 
   return (
     <header className="header">
@@ -22,20 +48,30 @@ function Header({ isNavOpen, setIsNavOpen }) {
 
 
       <div className="header-right">
-        <span className="icon">
-          <img src={expand} alt="Expand" />
-        </span>
 
-        <span className="icon">
-          <img src={notification} alt="Notification" />
+         <span className="icon" onClick={toggleFullscreen}>
+          <img
+            src={expand}
+            alt="Expand"
+            title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+          />
         </span>
-        <span className="icon" >
+        <span className="icon" style={{cursor:"disabled"}} >
           TASK
         </span>
-        <span className="icon">
+        <span className="icon" onClick={toggleProfile}>
           <img src={profile} alt="Profile" />
         </span>
       </div>
+
+      <NotificationPopup
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+      />
+      <ProfilePopup
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+      />
     </header>
   );
 }

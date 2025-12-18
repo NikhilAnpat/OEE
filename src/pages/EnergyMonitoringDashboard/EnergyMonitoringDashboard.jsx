@@ -1,13 +1,72 @@
 import React, { useEffect, useRef, useState } from "react";
 import ApexCharts from "apexcharts";
 import "./EnergyMonitoringDashboard.css";
+import energyData from "../../services/Data.json";
 
 export default function EnergyMonitoringDashboard() {
   const [theme, setTheme] = useState("light");
+  const [energyMetrics, setEnergyMetrics] = useState({
+    totalConsumption: 0,
+    totalCost: 0,
+    maxDemand: 0
+  });
+  const [hasRecords, setHasRecords] = useState(true);
 
   const lineRef = useRef(null);
   const barRef = useRef(null);
   const pieRef = useRef(null);
+
+  // Calculate energy metrics from data
+  useEffect(() => {
+    // ✅ device/system current time
+    const now = new Date();
+
+    // ✅ last 24 hours window
+    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // ✅ filter JSON data for last 24 hours
+    const last24HrData = energyData.filter(item => {
+      if (!item.ts || typeof item["Meter:KWH"] !== "number") return false;
+      const ts = new Date(item.ts);
+      return ts >= last24Hours && ts <= now;
+    });
+
+    if (last24HrData.length === 0) {
+      setHasRecords(false);
+      return;
+    }
+
+    setHasRecords(true);
+
+    // ✅ sort by timestamp
+    last24HrData.sort((a, b) => new Date(a.ts) - new Date(b.ts));
+
+    console.log('last24HrData', last24HrData);
+
+    // ✅ cumulative meter logic
+    const firstKwh = last24HrData[0]["Meter:KW"];
+    const lastKwh = last24HrData[last24HrData.length - 1]["Meter:KW"];
+
+    console.log('lastKwh', lastKwh);
+    console.log('firstKwh', firstKwh);
+
+    const totalEnergyKwh = lastKwh + firstKwh;
+    const COST_PER_KWH = 7;
+
+    // ✅ max demand logic
+    const maxKW = Math.max(...last24HrData.map(d => d["Meter:KW"] || 0));
+
+    setEnergyMetrics({
+      totalConsumption: totalEnergyKwh,   // kWh
+      totalCost: totalEnergyKwh * COST_PER_KWH,
+      maxDemand: maxKW / 1000 // MW
+    });
+
+  }, []);
+
+
+
+
 
   useEffect(() => {
     const isDark = theme === "dark";
@@ -131,15 +190,15 @@ export default function EnergyMonitoringDashboard() {
       style={
         theme === "dark"
           ? {
-              "--bg-main": "#020617",
-              "--text-main": "#f9fafb",
-              "--card-bg": "#0f172a",
-              "--border-color": "rgba(255,255,255,0.15)",
-              "--btn-bg": "#0f172a",
-              "--btn-text": "#ffffff",
-              "--shadow": "0 4px 12px rgba(0,0,0,0.4)",
-              "--muted-text": "#94a3b8"
-            }
+            "--bg-main": "#020617",
+            "--text-main": "#f9fafb",
+            "--card-bg": "#0f172a",
+            "--border-color": "rgba(255,255,255,0.15)",
+            "--btn-bg": "#0f172a",
+            "--btn-text": "#ffffff",
+            "--shadow": "0 4px 12px rgba(0,0,0,0.4)",
+            "--muted-text": "#94a3b8"
+          }
           : {}
       }
     >
@@ -182,8 +241,22 @@ export default function EnergyMonitoringDashboard() {
         <div className="emd-kpi-grid">
           <div className="emd-card kpi">
             <p>Last 24 Hrs Energy Consumption</p>
-            <h2 className="green">28.6 <span>MWh</span></h2>
+
+            {hasRecords ? (
+              <h2 className="green">
+                {energyMetrics.totalConsumption.toFixed(1)} <span>kWh</span>
+                <br />
+                {/* <small style={{ color: "#9ca3af", fontSize: "0.85rem" }}>
+        ({(energyMetrics.totalConsumption / 1000).toFixed(2)} MWh)
+      </small> */}
+              </h2>
+            ) : (
+              <h2 style={{ color: "#9ca3af", fontSize: "1rem" }}>
+                No records for last 24 hours
+              </h2>
+            )}
           </div>
+
 
           <div className="emd-card kpi">
             <p>Energy from Generator</p>
@@ -192,12 +265,32 @@ export default function EnergyMonitoringDashboard() {
 
           <div className="emd-card kpi">
             <p>Last 24 Hrs Energy Cost</p>
-            <h2 className="green">₹200K</h2>
+
+            {hasRecords ? (
+              <h2 className="green">
+                ₹{energyMetrics.totalCost.toFixed(0)}
+                <br />
+                {/* <small style={{ color: "#9ca3af", fontSize: "0.85rem" }}>
+        (₹{(energyMetrics.totalCost / 1000).toFixed(2)} K)
+      </small> */}
+              </h2>
+            ) : (
+              <h2 style={{ color: "#9ca3af", fontSize: "1rem" }}>
+                No records for last 24 hours
+              </h2>
+            )}
           </div>
+
 
           <div className="emd-card kpi">
             <p>Max Demand (Last 24 Hrs)</p>
-            <h2 className="green">1.51 <span>MVA</span></h2>
+            {hasRecords ? (
+              <h2 className="green">
+                {energyMetrics.maxDemand.toFixed(2)} <span>MW</span>
+              </h2>
+            ) : (
+              <h2 style={{ color: "#9ca3af", fontSize: "1.6vh" }}>No records for last 24 hours</h2>
+            )}
           </div>
 
           <div className="emd-card kpi">
