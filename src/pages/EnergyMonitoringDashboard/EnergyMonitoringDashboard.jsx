@@ -5,137 +5,166 @@ import energyData from "../../services/Data.json";
 
 export default function EnergyMonitoringDashboard() {
   const [theme, setTheme] = useState("light");
+  const [selectedRange, setSelectedRange] = useState("Last 24 hours"); // Track selected range
+
   const [energyMetrics, setEnergyMetrics] = useState({
     totalConsumption: 0,
     totalCost: 0,
     maxDemand: 0
   });
+
+  // State for chart series
+  const [chartData, setChartData] = useState([]);
   const [hasRecords, setHasRecords] = useState(true);
 
   const lineRef = useRef(null);
   const barRef = useRef(null);
   const pieRef = useRef(null);
 
-  // Calculate energy metrics from data
+  // Calculate 24-Hour KPI Metrics (Fixed)
   useEffect(() => {
-    // ✅ device/system current time
     const now = new Date();
+    // Fixed Window: Last 24 Hours
+    const kpiStartTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    // ✅ last 24 hours window
-    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-    // ✅ filter JSON data for last 24 hours
-    const last24HrData = energyData.filter(item => {
-      // Relaxed filter: Only check for timestamp
+    const kpiData = energyData.filter(item => {
       if (!item.ts) return false;
-
-      // Treat timestamp as local time by removing 'Z' (User request to match strictly against local clock)
       const localTsString = item.ts.replace("Z", "");
       const ts = new Date(localTsString);
-
-      return ts >= last24Hours && ts <= now;
+      return ts >= kpiStartTime && ts <= now;
     });
 
-    if (last24HrData.length === 0) {
-      console.log("No records found in last 24 hours window:", last24Hours.toLocaleString(), "to", now.toLocaleString());
-      setHasRecords(false);
+    if (kpiData.length === 0) {
+      setEnergyMetrics({ totalConsumption: 0, totalCost: 0, maxDemand: 0 });
+      setHasRecords(false); // Indicates no data for the MAIN KPI 24h view 
+    } else {
+      setHasRecords(true);
+
+      let totalKWh = 0;
+      const kwValues = [];
+      const INTERVAL_HOURS = 1 / 60;
+
+      kpiData.forEach(entry => {
+        const kw = typeof entry["Meter:KW"] === 'number' ? entry["Meter:KW"] : 0;
+        kwValues.push(kw);
+        totalKWh += kw * INTERVAL_HOURS;
+      });
+
+      const maxKW = Math.max(...kwValues);
+      const COST_PER_KWH = 7;
+
+      setEnergyMetrics({
+        totalConsumption: totalKWh,
+        totalCost: totalKWh * COST_PER_KWH,
+        maxDemand: maxKW / 1000
+      });
+    }
+  }, []); // Runs once on mount
+
+
+  // Calculate Graph Data (Dynamic based on Filter)
+  useEffect(() => {
+    const now = new Date();
+    let startTime;
+
+    if (selectedRange === "Last 6 hours") {
+      startTime = new Date(now.getTime() - 6 * 60 * 60 * 1000);
+    } else if (selectedRange === "Last 7 days") {
+      startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    } else {
+      startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    }
+
+    const filteredData = energyData.filter(item => {
+      if (!item.ts) return false;
+      const localTsString = item.ts.replace("Z", "");
+      const ts = new Date(localTsString);
+      return ts >= startTime && ts <= now;
+    });
+
+    // Sort for graph
+    filteredData.sort((a, b) => new Date(a.ts.replace("Z", "")) - new Date(b.ts.replace("Z", "")));
+
+    console.log(selectedRange, filteredData.length);
+    console.log('Window:', startTime.toLocaleString(), '-', now.toLocaleString());
+
+    if (filteredData.length === 0) {
+      console.log(selectedRange, "No records found in window:", startTime.toLocaleString(), "to", now.toLocaleString());
+      setChartData([]);
       return;
     }
 
-    setHasRecords(true);
-
-    // ✅ sort by timestamp
-    last24HrData.sort((a, b) => new Date(a.ts.replace("Z", "")) - new Date(b.ts.replace("Z", "")));
-
-    console.log('last24HrData count:', last24HrData.length);
-    console.log('Window:', last24Hours.toLocaleString(), '-', now.toLocaleString());
-
-    // ✅ cumulative meter logic via Summation of KW
-    // Energy (kWh) = Sum(Power(kW) * Time(h))
-    // Assuming 1 minute intervals (1/60 hours)
-    const INTERVAL_HOURS = 1 / 60;
-
-    let totalKWh = 0;
-    const kwValues = [];
-
-    last24HrData.forEach(entry => {
-      // Use Meter:KW if available, otherwise 0
+    // Prepare chart series
+    const chartSeriesData = filteredData.map(entry => {
       const kw = typeof entry["Meter:KW"] === 'number' ? entry["Meter:KW"] : 0;
-      kwValues.push(kw);
-      totalKWh += kw * INTERVAL_HOURS;
-    });
-    console.log('last24HrData', last24HrData);
-
-    const totalEnergyMWh = totalKWh / 1000;
-    const COST_PER_KWH = 7;
-
-    // ✅ max demand logic
-    const maxKW = Math.max(...kwValues);
-
-    setEnergyMetrics({
-      totalConsumption: totalKWh,   // kWh
-      totalCost: totalKWh * COST_PER_KWH,
-      maxDemand: maxKW / 1000 // MW
+      const ts = new Date(entry.ts.replace("Z", "")).getTime();
+      return [ts, kw];
     });
 
-  }, []);
+    setChartData(chartSeriesData);
 
-
-
+  }, [selectedRange]); // Runs whenever filter changes
 
 
   useEffect(() => {
     const isDark = theme === "dark";
-
     const commonLabelColor = isDark ? "#e5e7eb" : "#374151";
     const gridColor = isDark ? "rgba(255,255,255,0.15)" : "#e5e7eb";
+
+    // Format date on x-axis based on range
+    let xFormat = "HH:mm";
+    if (selectedRange === "Last 7 days") {
+      xFormat = "dd MMM";
+    }
+
+    // LINE CHART - Recreated with real data
+    // Destroy previous instance if it exists (react-apexcharts handles this usually, 
+    // but here we are using raw ApexCharts so we might need to be careful. 
+    // However, the existing code cleans up in the return function)
+    if (lineRef.current) {
+      lineRef.current.innerHTML = ""; // simplistic clear for vanilla JS usage context inside React
+    }
 
     const line = new ApexCharts(lineRef.current, {
       chart: {
         type: "line",
         height: "100%",
         toolbar: { show: false },
-        foreColor: commonLabelColor
+        foreColor: commonLabelColor,
+        zoom: { enabled: false }
       },
-
-      theme: {
-        mode: isDark ? "dark" : "light"
-      },
-
+      theme: { mode: isDark ? "dark" : "light" },
       tooltip: {
-        theme: isDark ? "dark" : "light"
+        theme: isDark ? "dark" : "light",
+        x: { format: xFormat }
       },
-
       series: [
-        { name: "WBSEDCL Line", data: [1.1, 1.3, 1.45, 1.4, 1.35, 1.5, 1.42] },
-        { name: "Generator", data: [0, 0, 0, 0, 0, 0, 0] }
+        { name: "WBSEDCL Line", data: chartData },
+        // Showing real data now. 
+        // Note: Generator data is not in JSON, keeping empty or removing 
+        { name: "Generator", data: [] }
       ],
-
       xaxis: {
-        categories: ["07:30", "08:30", "09:30", "10:30", "11:30", "12:30", "13:00"],
+        type: 'datetime',
         labels: {
-          style: {
-            colors: commonLabelColor
-          }
-        }
+          style: { colors: commonLabelColor },
+          datetimeUTC: false
+        },
+        tooltip: { enabled: false }
       },
-
       yaxis: {
-        labels: {
-          style: {
-            colors: commonLabelColor
-          }
-        }
+        labels: { style: { colors: commonLabelColor } },
+        title: { text: "KW", style: { color: commonLabelColor } }
       },
-
-      grid: {
-        borderColor: gridColor
-      },
-
-      stroke: { width: 3 },
-      colors: ["#6aa84f", "#f1c232"]
+      grid: { borderColor: gridColor },
+      stroke: { width: 2, curve: 'smooth' },
+      colors: ["#6aa84f", "#f1c232"],
+      dataLabels: { enabled: false }
     });
 
+    // ... Bar and Pie charts remain static for now as requested focus was "the graph" (Line)
+    // Re-rendering them to keep layout consistent
+    if (barRef.current) barRef.current.innerHTML = "";
     const bar = new ApexCharts(barRef.current, {
       chart: {
         type: "bar",
@@ -144,46 +173,20 @@ export default function EnergyMonitoringDashboard() {
         toolbar: { show: false },
         foreColor: commonLabelColor
       },
-
-      theme: {
-        mode: isDark ? "dark" : "light"
-      },
-
-      tooltip: {
-        theme: isDark ? "dark" : "light"
-      },
-
+      theme: { mode: isDark ? "dark" : "light" },
       series: [
         { name: "Grid", data: [1.4, 1.35, 1.38, 1.3, 1.42] },
         { name: "Generator", data: [0.8, 0.85, 0.9, 0.8, 0.95] }
       ],
-
-      xaxis: {
-        categories: ["09:00", "10:00", "11:00", "12:00", "13:00"]
-      },
-
-      grid: {
-        borderColor: gridColor
-      },
-
+      xaxis: { categories: ["09:00", "10:00", "11:00", "12:00", "13:00"] },
+      grid: { borderColor: gridColor },
       colors: ["#6aa84f", "#cc0000"]
     });
 
+    if (pieRef.current) pieRef.current.innerHTML = "";
     const pie = new ApexCharts(pieRef.current, {
-      chart: {
-        type: "pie",
-        height: 260,
-        foreColor: commonLabelColor
-      },
-
-      theme: {
-        mode: isDark ? "dark" : "light"
-      },
-
-      tooltip: {
-        theme: isDark ? "dark" : "light"
-      },
-
+      chart: { type: "pie", height: 260, foreColor: commonLabelColor },
+      theme: { mode: isDark ? "dark" : "light" },
       series: [56, 28, 6, 10],
       labels: ["Satake", "Miltech", "Compressor", "Boiler"],
       colors: ["#6aa84f", "#cc0000", "#3d85c6", "#f1c232"]
@@ -198,7 +201,7 @@ export default function EnergyMonitoringDashboard() {
       bar.destroy();
       pie.destroy();
     };
-  }, [theme]);
+  }, [theme, chartData, selectedRange]); // Re-render chart when data/range changes
 
   return (
     <section
@@ -224,7 +227,11 @@ export default function EnergyMonitoringDashboard() {
         </div>
 
         <div className="emd-actions">
-          <select className="emd-select">
+          <select
+            className="emd-select"
+            value={selectedRange}
+            onChange={(e) => setSelectedRange(e.target.value)}
+          >
             <option>Last 6 hours</option>
             <option>Last 24 hours</option>
             <option>Last 7 days</option>
