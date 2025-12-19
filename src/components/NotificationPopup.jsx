@@ -1,122 +1,85 @@
-import { useState } from 'react';
-import './NotificationPopup.css';
+import { useState, useEffect } from 'react'
+import Data from '../services/Data.json'
+import './NotificationPopup.css'
 
 function NotificationPopup({ isOpen, onClose }) {
-    const [activeTab, setActiveTab] = useState('all');
+    const [activeTab] = useState('all')
+    const [notifications, setNotifications] = useState([])
 
-    // Sample notification data
-    const notifications = [
-        {
-            id: 1,
-            user: 'Dora Peshi',
-            action: 'published a project',
-            project: '"AI Tools in Design"',
-            time: '3 min ago',
-            workspace: 'Working Space',
-            avatar: '👤',
-            type: 'info'
-        },
-        {
-            id: 2,
-            user: 'Alex Green',
-            action: 'attached multiple Photos',
-            time: '12 min ago',
-            workspace: 'Working Space',
-            avatar: '👤',
-            type: 'attachment'
-        },
-        {
-            id: 3,
-            user: 'Max Lie',
-            action: 'attached Files',
-            time: '18 min ago',
-            files: ['meneger.pdf', 'illustration.png'],
-            avatar: '👤',
-            type: 'files'
-        },
-        {
-            id: 4,
-            user: 'Sofie Cooper',
-            action: 'sent a Project Invitation',
-            time: '26 min ago',
-            workspace: 'Working Space',
-            avatar: '👤',
-            type: 'invitation',
-            hasActions: true
-        },
-        {
-            id: 5,
-            user: 'John Owner',
-            action: 'sent a message in channel AI Trend',
-            message: 'Wow, this is really epic',
-            time: '1 day ago',
-            workspace: 'Working Space',
-            avatar: '👤',
-            type: 'message'
+    useEffect(() => {
+        if (Data && Data.length > 0) {
+            const newNotifications = [];
+            let index = 1;
+
+            Data.slice().reverse().forEach(item => {
+                Object.keys(item).forEach(key => {
+                    if (key.startsWith('#DEVICE_ERROR_')) {
+                        const value = item[key];
+                        if (value !== 0) {
+                            const deviceName = key.replace('#DEVICE_ERROR_', '').replace(/_/g, ' ');
+                            const timeStr = item.ts
+                                ? new Date(item.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                : "Just now";
+
+                            newNotifications.push({
+                                id: index++,
+                                title: `Device Error Detected: ${deviceName}`,
+                                device: deviceName,
+                                value: value,
+                                severity: "critical",
+                                time: timeStr
+                            });
+                        }
+                    }
+                });
+            });
+            console.log("Processed Notifications:", newNotifications);
+            setNotifications(newNotifications);
         }
-    ];
+    }, [isOpen]);
 
-    if (!isOpen) return null;
+    if (!isOpen) return null
 
     return (
         <>
             <div className="notification-overlay" onClick={onClose}></div>
+
             <div className="notification-popup">
                 <div className="notification-header">
                     <h3>Notifications</h3>
                     <button className="close-btn" onClick={onClose}>✕</button>
                 </div>
 
-                <div className="notification-tabs">
-                    <button
-                        className={`tab ${activeTab === 'all' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('all')}
-                    >
-                        View All <span className="badge">8</span>
-                    </button>
-                
-                </div>
-
                 <div className="notification-list">
-                    {notifications.map((notif) => (
-                        <div key={notif.id} className="notification-item">
-                            <div className="notification-avatar">{notif.avatar}</div>
-                            <div className="notification-content">
-                                <div className="notification-text">
-                                    <strong>{notif.user}</strong> {notif.action} {notif.project && <span className="highlight">{notif.project}</span>}
-                                    {notif.message && <div className="notification-message">"{notif.message}"</div>}
+                    {notifications.map(alarm => (
+                        <div key={alarm.id} className={`alarm-card ${alarm.severity}`}>
+                            <div className="alarm-left">🔔</div>
+
+                            <div className="alarm-content">
+                                <div className="alarm-title">{alarm.title}</div>
+                                <div className="alarm-meta">
+                                    Severity: <strong>{alarm.severity}</strong>, originator: Device '{alarm.device}'
+                                    <br />
+                                    <span style={{ color: '#ef4444' }}>Error Code: {alarm.value}</span>
                                 </div>
-                                <div className="notification-meta">
-                                    <span className="time">{notif.time}</span>
-                                    {notif.workspace && <span className="workspace"> • {notif.workspace}</span>}
-                                </div>
-                                {notif.files && (
-                                    <div className="notification-files">
-                                        {notif.files.map((file, idx) => (
-                                            <div key={idx} className="file-item">
-                                                <span className="file-icon">📄</span>
-                                                <span className="file-name">{file}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                {notif.hasActions && (
-                                    <div className="notification-actions">
-                                        <button className="accept-btn">Accept</button>
-                                        <button className="decline-btn">Decline</button>
-                                    </div>
-                                )}
+                            </div>
+
+                            <div className="alarm-right">
+                                <span className={`severity-badge ${alarm.severity}`}>
+                                    {alarm.severity.charAt(0).toUpperCase() + alarm.severity.slice(1)}
+                                </span>
+                                <span className="alarm-time">{alarm.time}</span>
                             </div>
                         </div>
                     ))}
                 </div>
 
                 <div className="notification-footer">
-                    <a href="#" className="see-all-link">See all notifications</a>
+                    <a href="#" className="see-all-link">View All</a>
                 </div>
             </div>
         </>
-    );
+    )
 }
 
-export default NotificationPopup;
+export default NotificationPopup
