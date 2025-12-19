@@ -4,9 +4,9 @@ import './ProfilePopup.css';
 function ProfilePopup({ isOpen, onClose }) {
     const [view, setView] = useState('menu');
     const [formData, setFormData] = useState({
-        email: "akshay.anpat@advantech.com",
-        firstName: "Akshay",
-        lastName: "Anpat",
+        email: "",
+        firstName: "",
+        lastName: "",
         phone: "",
         language: "English (United States)",
         unitSystem: "Auto"
