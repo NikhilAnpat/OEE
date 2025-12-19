@@ -26,12 +26,18 @@ export default function EnergyMonitoringDashboard() {
 
     // ✅ filter JSON data for last 24 hours
     const last24HrData = energyData.filter(item => {
-      if (!item.ts || typeof item["Meter:KWH"] !== "number") return false;
-      const ts = new Date(item.ts);
+      // Relaxed filter: Only check for timestamp
+      if (!item.ts) return false;
+
+      // Treat timestamp as local time by removing 'Z' (User request to match strictly against local clock)
+      const localTsString = item.ts.replace("Z", "");
+      const ts = new Date(localTsString);
+
       return ts >= last24Hours && ts <= now;
     });
 
     if (last24HrData.length === 0) {
+      console.log("No records found in last 24 hours window:", last24Hours.toLocaleString(), "to", now.toLocaleString());
       setHasRecords(false);
       return;
     }
@@ -39,26 +45,36 @@ export default function EnergyMonitoringDashboard() {
     setHasRecords(true);
 
     // ✅ sort by timestamp
-    last24HrData.sort((a, b) => new Date(a.ts) - new Date(b.ts));
+    last24HrData.sort((a, b) => new Date(a.ts.replace("Z", "")) - new Date(b.ts.replace("Z", "")));
 
+    console.log('last24HrData count:', last24HrData.length);
+    console.log('Window:', last24Hours.toLocaleString(), '-', now.toLocaleString());
+
+    // ✅ cumulative meter logic via Summation of KW
+    // Energy (kWh) = Sum(Power(kW) * Time(h))
+    // Assuming 1 minute intervals (1/60 hours)
+    const INTERVAL_HOURS = 1 / 60;
+
+    let totalKWh = 0;
+    const kwValues = [];
+
+    last24HrData.forEach(entry => {
+      // Use Meter:KW if available, otherwise 0
+      const kw = typeof entry["Meter:KW"] === 'number' ? entry["Meter:KW"] : 0;
+      kwValues.push(kw);
+      totalKWh += kw * INTERVAL_HOURS;
+    });
     console.log('last24HrData', last24HrData);
 
-    // ✅ cumulative meter logic
-    const firstKwh = last24HrData[0]["Meter:KW"];
-    const lastKwh = last24HrData[last24HrData.length - 1]["Meter:KW"];
-
-    console.log('lastKwh', lastKwh);
-    console.log('firstKwh', firstKwh);
-
-    const totalEnergyKwh = lastKwh + firstKwh;
+    const totalEnergyMWh = totalKWh / 1000;
     const COST_PER_KWH = 7;
 
     // ✅ max demand logic
-    const maxKW = Math.max(...last24HrData.map(d => d["Meter:KW"] || 0));
+    const maxKW = Math.max(...kwValues);
 
     setEnergyMetrics({
-      totalConsumption: totalEnergyKwh,   // kWh
-      totalCost: totalEnergyKwh * COST_PER_KWH,
+      totalConsumption: totalKWh,   // kWh
+      totalCost: totalKWh * COST_PER_KWH,
       maxDemand: maxKW / 1000 // MW
     });
 
