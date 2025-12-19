@@ -67,7 +67,7 @@ function ProfilePopup({ isOpen, onClose }) {
                         <div className="profile-edit-body">
                             <div className="form-group-sm">
                                 <label>Email*</label>
-                                <input type="email" className="form-input-sm" value={formData.email} readOnly />
+                                <input type="email" className="form-input-sm" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                             </div>
                             <div className="form-group-sm">
                                 <label>First name</label>
@@ -79,7 +79,7 @@ function ProfilePopup({ isOpen, onClose }) {
                             </div>
                             <div className="form-group-sm">
                                 <div className="phone-group-sm">
-                                    <select className="country-select-sm"><option value="US">US</option></select>
+                                    <select className="country-select-sm"><option value="US">US</option><option value="IN">IN</option></select>
                                     <input type="tel" className="phone-input-sm" placeholder="Phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                                 </div>
                             </div>
@@ -88,6 +88,7 @@ function ProfilePopup({ isOpen, onClose }) {
                                 <select className="form-select-sm" value={formData.language} onChange={(e) => setFormData({ ...formData, language: e.target.value })}>
                                     <option>English (United States)</option>
                                     <option>Spanish</option>
+                                    <option>India</option>
                                 </select>
                             </div>
                             <div className="form-group-sm">
