@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './ProfilePopup.css';
 
 function ProfilePopup({ isOpen, onClose }) {
+    const navigate = useNavigate();
     const [view, setView] = useState('menu');
     const [formData, setFormData] = useState({
         email: "",
@@ -12,10 +14,25 @@ function ProfilePopup({ isOpen, onClose }) {
         unitSystem: "Auto"
     });
 
+    // Get user info from localStorage
+    const userEmail = localStorage.getItem('userEmail') || '';
+    const userName = userEmail ? userEmail.split('@')[0] : 'User';
+    const userRole = localStorage.getItem('userRole') || 'user';
+
     if (!isOpen) return null;
 
     const handleClose = () => {
         setView('menu');
+        onClose();
+    };
+
+    const handleLogout = () => {
+        // Clear authentication data
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('userEmail');
+        localStorage.removeItem('userRole');
+        // Redirect to login page
+        navigate('/login');
         onClose();
     };
 
@@ -28,8 +45,8 @@ function ProfilePopup({ isOpen, onClose }) {
                         <div className="profile-header">
                             <div className="profile-avatar-large">👤</div>
                             <div className="profile-info">
-                                <h3>John Doe</h3>
-                                <p className="profile-email">john.doe@company.com</p>
+                                <h3>{userName.charAt(0).toUpperCase() + userName.slice(1)}</h3>
+                                <p className="profile-email">{userEmail || 'No email'}</p>
                             </div>
                         </div>
 
@@ -51,7 +68,7 @@ function ProfilePopup({ isOpen, onClose }) {
                             </button>
 
                             <div className="menu-divider"></div>
-                            <button className="profile-menu-item logout">
+                            <button className="profile-menu-item logout" onClick={handleLogout}>
                                 <span className="menu-icon">🚪</span>
                                 <span>Logout</span>
                             </button>
