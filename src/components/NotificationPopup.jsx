@@ -52,7 +52,7 @@ function NotificationPopup({ isOpen, onClose }) {
 
                 <div className="notification-list">
                     {notifications.map(alarm => (
-                        <div key={alarm.id} className={`alarm-card ${alarm.severity}`}>
+                        <div key={alarm.id} className={`alarm-card ${alarm.severity}`}> 
                             <div className="alarm-left">🔔</div>
 
                             <div className="alarm-content">

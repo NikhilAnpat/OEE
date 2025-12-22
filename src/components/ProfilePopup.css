@@ -19,6 +19,21 @@
     overflow: hidden;
 }
 
+.profile-popup-centered {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40vw;
+    max-width: 500px;
+    min-width: 300px;
+    background: #ffffff;
+    border-radius: 1.2vh;
+    box-shadow: 0 0.8vh 3.2vh rgba(0, 0, 0, 0.2);
+    z-index: 1600;
+    overflow: hidden;
+}
+
 .profile-header {
     padding: 2vh 2vw;
     color: black;
@@ -107,6 +122,10 @@
         width: 35vw;
         max-width: none;
     }
+
+    .profile-popup-centered {
+        width: 60vw;
+    }
 }
 
 @media (max-width: 600px) {
@@ -114,6 +133,12 @@
         top: 10vh;
         right: 5vw;
         left: 5vw;
+        width: 90vw;
+        max-width: none;
+        min-width: unset;
+    }
+
+    .profile-popup-centered {
         width: 90vw;
         max-width: none;
         min-width: unset;
@@ -193,7 +218,7 @@
 
 .form-group-sm label {
     display: block;
-    font-size: 1.3vh;
+    font-size: 1.7vh;
     color: #6b7280;
     margin-bottom: 0.5vh;
     font-weight: 500;
