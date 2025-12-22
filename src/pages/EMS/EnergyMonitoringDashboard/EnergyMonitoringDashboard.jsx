@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import ApexCharts from "apexcharts";
 import "./EnergyMonitoringDashboard.css";
 import energyData from "../../../services/Data.json";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 export default function EnergyMonitoringDashboard() {
   const [theme, setTheme] = useState("light");
@@ -14,8 +16,11 @@ export default function EnergyMonitoringDashboard() {
   });
 
   // State for chart series
-  const [chartData, setChartData] = useState([]);
+  const [lineSeries, setLineSeries] = useState([]);
+  const [pieSeries, setPieSeries] = useState([0, 0, 0]);
+  const [barData, setBarData] = useState({ series: [], labels: [] });
   const [hasRecords, setHasRecords] = useState(true);
+  const [isPrinting, setIsPrinting] = useState(false); // State to handle PDF generation visibility
 
   const lineRef = useRef(null);
   const barRef = useRef(null);
@@ -29,8 +34,7 @@ export default function EnergyMonitoringDashboard() {
 
     const kpiData = energyData.filter(item => {
       if (!item.ts) return false;
-      const localTsString = item.ts.replace("Z", "");
-      const ts = new Date(localTsString);
+      const ts = new Date(item.ts.replace("Z", ""));
       return ts >= kpiStartTime && ts <= now;
     });
 
@@ -40,23 +44,32 @@ export default function EnergyMonitoringDashboard() {
     } else {
       setHasRecords(true);
 
-      let totalKWh = 0;
+      let totalM1 = 0;
+      let totalM2 = 0;
+      let totalM3 = 0;
       const kwValues = [];
-      const INTERVAL_HOURS = 1 / 60;
 
       kpiData.forEach(entry => {
-        const kw = typeof entry["Meter:KW"] === 'number' ? entry["Meter:KW"] : 0;
-        kwValues.push(kw);
-        totalKWh += kw * INTERVAL_HOURS;
+        const m1 = typeof entry["Meter1:KWH"] === 'number' ? entry["Meter1:KWH"] : 0;
+        const m2 = typeof entry["meter2:KWH"] === 'number' ? entry["meter2:KWH"] : 0;
+        const m3 = typeof entry["meter3:KWH"] === 'number' ? entry["meter3:KWH"] : 0;
+        kwValues.push(m1 + m2 + m3);
       });
 
-      const maxKW = Math.max(...kwValues);
+      // Simple sum of all three meters from the latest record as requested
+      const latest = kpiData[kpiData.length - 1];
+      const m1Latest = typeof latest["Meter1:KWH"] === 'number' ? latest["Meter1:KWH"] : 0;
+      const m2Latest = typeof latest["meter2:KWH"] === 'number' ? latest["meter2:KWH"] : 0;
+      const m3Latest = typeof latest["meter3:KWH"] === 'number' ? latest["meter3:KWH"] : 0;
+
+      const combinedTotal = m1Latest + m2Latest + m3Latest;
+      const maxKW = kwValues.length > 0 ? Math.max(...kwValues) : 0;
       const COST_PER_KWH = 7;
 
       setEnergyMetrics({
-        totalConsumption: totalKWh,
-        totalCost: totalKWh * COST_PER_KWH,
-        maxDemand: maxKW / 1000
+        totalConsumption: combinedTotal,
+        totalCost: combinedTotal * COST_PER_KWH,
+        maxDemand: maxKW / 1000 // Keep for the Max Demand card
       });
     }
   }, []); // Runs once on mount
@@ -77,33 +90,152 @@ export default function EnergyMonitoringDashboard() {
 
     const filteredData = energyData.filter(item => {
       if (!item.ts) return false;
-      const localTsString = item.ts.replace("Z", "");
-      const ts = new Date(localTsString);
+      const ts = new Date(item.ts.replace("Z", ""));
       return ts >= startTime && ts <= now;
     });
 
     // Sort for graph
-    filteredData.sort((a, b) => new Date(a.ts.replace("Z", "")) - new Date(b.ts.replace("Z", "")));
-
-    console.log(selectedRange, filteredData.length);
-    console.log('Window:', startTime.toLocaleString(), '-', now.toLocaleString());
+    filteredData.sort((a, b) => new Date(a.ts.replace("Z", "")).getTime() - new Date(b.ts.replace("Z", "")).getTime());
 
     if (filteredData.length === 0) {
-      console.log(selectedRange, "No records found in window:", startTime.toLocaleString(), "to", now.toLocaleString());
-      setChartData([]);
+      setLineSeries([]);
+      setPieSeries([0, 0, 0]);
+      setBarData({ series: [], labels: [] });
       return;
     }
 
-    // Prepare chart series
-    const chartSeriesData = filteredData.map(entry => {
-      const kw = typeof entry["Meter:KW"] === 'number' ? entry["Meter:KW"] : 0;
+    // 1. Prepare Line Series & Pie Data
+    const m1Data = [];
+    const m2Data = [];
+    const m3Data = [];
+    let totalM1 = 0;
+    let totalM2 = 0;
+    let totalM3 = 0;
+
+    filteredData.forEach(entry => {
       const ts = new Date(entry.ts.replace("Z", "")).getTime();
-      return [ts, kw];
+      const val1 = typeof entry["Meter1:KWH"] === 'number' ? entry["Meter1:KWH"] : 0;
+      const val2 = typeof entry["meter2:KWH"] === 'number' ? entry["meter2:KWH"] : 0;
+      const val3 = typeof entry["meter3:KWH"] === 'number' ? entry["meter3:KWH"] : 0;
+
+      m1Data.push([ts, val1]);
+      m2Data.push([ts, val2]);
+      m3Data.push([ts, val3]);
+
+      totalM1 += val1;
+      totalM2 += val2;
+      totalM3 += val3;
     });
 
-    setChartData(chartSeriesData);
+    // FIX: If there is only one data point, add a duplicate point at "now" 
+    // to force ApexCharts to draw a line instead of a single dot.
+    if (filteredData.length === 1) {
+      const ts = m1Data[0][0];
+      const val1 = m1Data[0][1];
+      const val2 = m2Data[0][1];
+      const val3 = m3Data[0][1];
+      const nowTs = now.getTime();
+
+      if (ts < nowTs) {
+        m1Data.push([nowTs, val1]);
+        m2Data.push([nowTs, val2]);
+        m3Data.push([nowTs, val3]);
+      }
+    }
+
+    // 3. Prepare Bar Chart Data (Hourly Aggregation)
+    const hourlyAggregation = {};
+
+    filteredData.forEach(entry => {
+      const ts = new Date(entry.ts.replace("Z", ""));
+      let bucket;
+      if (selectedRange === "Last 7 days") {
+        bucket = ts.toLocaleDateString([], { day: '2-digit', month: 'short' });
+      } else {
+        bucket = ts.getHours() + ":00";
+      }
+
+      if (!hourlyAggregation[bucket]) {
+        hourlyAggregation[bucket] = { m1: 0, m2: 0, m3: 0 };
+      }
+
+      hourlyAggregation[bucket].m1 += typeof entry["Meter1:KWH"] === 'number' ? entry["Meter1:KWH"] : 0;
+      hourlyAggregation[bucket].m2 += typeof entry["meter2:KWH"] === 'number' ? entry["meter2:KWH"] : 0;
+      hourlyAggregation[bucket].m3 += typeof entry["meter3:KWH"] === 'number' ? entry["meter3:KWH"] : 0;
+    });
+
+    const labelsForBar = Object.keys(hourlyAggregation);
+    const barM1 = labelsForBar.map(l => hourlyAggregation[l].m1);
+    const barM2 = labelsForBar.map(l => hourlyAggregation[l].m2);
+    const barM3 = labelsForBar.map(l => hourlyAggregation[l].m3);
+
+    // Final State Updates
+    setLineSeries([
+      { name: "Meter 1", data: m1Data },
+      { name: "Meter 2", data: m2Data },
+      { name: "Meter 3", data: m3Data }
+    ]);
+
+    setPieSeries([totalM1, totalM2, totalM3]);
+
+    setBarData({
+      labels: labelsForBar,
+      series: [
+        { name: "Meter 1", data: barM1 },
+        { name: "Meter 2", data: barM2 },
+        { name: "Meter 3", data: barM3 }
+      ]
+    });
 
   }, [selectedRange]); // Runs whenever filter changes
+
+  const downloadDailyReport = async () => {
+    setIsPrinting(true);
+    // Short delay to ensure the UI updates and "printing" styles are applied
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const element = document.querySelector(".emd-root");
+    const canvas = await html2canvas(element, {
+      scale: 2, // Higher scale for professional clarity
+      useCORS: true,
+      logging: false,
+      backgroundColor: theme === "dark" ? "#020617" : "#f9fafb",
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = Math.min(pdfWidth / imgWidth, (pdfHeight - 20) / imgHeight);
+
+    const finalWidth = imgWidth * ratio;
+    const finalHeight = imgHeight * ratio;
+
+    // Add Professional Title Header
+    pdf.setFontSize(18);
+    pdf.setTextColor(theme === "dark" ? 255 : 40);
+    pdf.text("Daily Energy Monitoring Report", 15, 15);
+
+    pdf.setFontSize(10);
+    pdf.setTextColor(100);
+    pdf.text(`Time Range: ${selectedRange}`, 15, 22);
+    pdf.text(`Generated on: ${new Date().toLocaleString()}`, 15, 27);
+
+    // Add Captured Dashboard Image
+    pdf.addImage(imgData, "PNG", (pdfWidth - finalWidth) / 2, 35, finalWidth, finalHeight);
+
+    // Add Footer
+    pdf.setFontSize(8);
+    pdf.text("Automated OEE Management System - Confidential Report", pdfWidth / 2, pdfHeight - 10, { align: "center" });
+
+    const dateStr = new Date().toLocaleDateString().replace(/\//g, "-");
+    const safeRange = selectedRange.replace(/\s+/g, "_");
+    pdf.save(`Energy_Report_${dateStr}_${safeRange}.pdf`);
+    setIsPrinting(false);
+  };
 
 
   useEffect(() => {
@@ -117,91 +249,91 @@ export default function EnergyMonitoringDashboard() {
       xFormat = "dd MMM";
     }
 
-    // LINE CHART - Recreated with real data
-    // Destroy previous instance if it exists (react-apexcharts handles this usually, 
-    // but here we are using raw ApexCharts so we might need to be careful. 
-    // However, the existing code cleans up in the return function)
+    // LINE CHART
+    let line;
     if (lineRef.current) {
-      lineRef.current.innerHTML = ""; // simplistic clear for vanilla JS usage context inside React
+      lineRef.current.innerHTML = "";
+      line = new ApexCharts(lineRef.current, {
+        chart: {
+          type: "line",
+          height: "80%",
+          toolbar: { show: false },
+          foreColor: commonLabelColor,
+          zoom: { enabled: false }
+        },
+        theme: { mode: isDark ? "dark" : "light" },
+        tooltip: {
+          theme: isDark ? "dark" : "light",
+          x: { format: xFormat }
+        },
+        series: lineSeries,
+        xaxis: {
+          type: 'datetime',
+          labels: {
+            style: { colors: commonLabelColor },
+            datetimeUTC: false
+          },
+          tooltip: { enabled: false }
+        },
+        yaxis: {
+          labels: { style: { colors: commonLabelColor } },
+          title: { text: "KWH", style: { color: commonLabelColor } }
+        },
+        grid: { borderColor: gridColor },
+        stroke: { width: 3, curve: 'smooth' },
+        markers: { size: 4, strokeWidth: 0, hover: { size: 6 } }, // Added markers for single-point visibility
+        colors: ["#6aa84f", "#cc0000", "#00bfff"], // Green, Red, Sky Blue
+        dataLabels: { enabled: false }
+      });
+      line.render();
     }
 
-    const line = new ApexCharts(lineRef.current, {
-      chart: {
-        type: "line",
-        height: "100%",
-        toolbar: { show: false },
-        foreColor: commonLabelColor,
-        zoom: { enabled: false }
-      },
-      theme: { mode: isDark ? "dark" : "light" },
-      tooltip: {
-        theme: isDark ? "dark" : "light",
-        x: { format: xFormat }
-      },
-      series: [
-        { name: "WBSEDCL Line", data: chartData },
-        // Showing real data now. 
-        // Note: Generator data is not in JSON, keeping empty or removing 
-        { name: "Generator", data: [] }
-      ],
-      xaxis: {
-        type: 'datetime',
-        labels: {
-          style: { colors: commonLabelColor },
-          datetimeUTC: false
+    // BAR CHART
+    let bar;
+    if (barRef.current) {
+      barRef.current.innerHTML = "";
+      bar = new ApexCharts(barRef.current, {
+        chart: {
+          type: "bar",
+          stacked: true,
+          height: 260,
+          toolbar: { show: false },
+          foreColor: commonLabelColor
         },
-        tooltip: { enabled: false }
-      },
-      yaxis: {
-        labels: { style: { colors: commonLabelColor } },
-        title: { text: "KW", style: { color: commonLabelColor } }
-      },
-      grid: { borderColor: gridColor },
-      stroke: { width: 2, curve: 'smooth' },
-      colors: ["#6aa84f", "#f1c232"],
-      dataLabels: { enabled: false }
-    });
+        theme: { mode: isDark ? "dark" : "light" },
+        series: barData.series,
+        xaxis: { categories: barData.labels },
+        grid: { borderColor: gridColor },
+        colors: ["#6aa84f", "#cc0000", "#00bfff"] // Green, Red, Sky Blue
+      });
+      bar.render();
+    }
 
-    // ... Bar and Pie charts remain static for now as requested focus was "the graph" (Line)
-    // Re-rendering them to keep layout consistent
-    if (barRef.current) barRef.current.innerHTML = "";
-    const bar = new ApexCharts(barRef.current, {
-      chart: {
-        type: "bar",
-        stacked: true,
-        height: 260,
-        toolbar: { show: false },
-        foreColor: commonLabelColor
-      },
-      theme: { mode: isDark ? "dark" : "light" },
-      series: [
-        { name: "Grid", data: [1.4, 1.35, 1.38, 1.3, 1.42] },
-        { name: "Generator", data: [0.8, 0.85, 0.9, 0.8, 0.95] }
-      ],
-      xaxis: { categories: ["09:00", "10:00", "11:00", "12:00", "13:00"] },
-      grid: { borderColor: gridColor },
-      colors: ["#6aa84f", "#cc0000"]
-    });
-
-    if (pieRef.current) pieRef.current.innerHTML = "";
-    const pie = new ApexCharts(pieRef.current, {
-      chart: { type: "pie", height: 260, foreColor: commonLabelColor },
-      theme: { mode: isDark ? "dark" : "light" },
-      series: [56, 28, 6, 10],
-      labels: ["Satake", "Miltech", "Compressor", "Boiler"],
-      colors: ["#6aa84f", "#cc0000", "#3d85c6", "#f1c232"]
-    });
-
-    line.render();
-    bar.render();
-    pie.render();
+    // PIE CHART
+    let pie;
+    const hasPieData = pieSeries.some(val => val > 0);
+    if (pieRef.current) {
+      pieRef.current.innerHTML = "";
+      if (!hasPieData) {
+        pieRef.current.innerHTML = `<div style="height: 300px; display: flex; align-items: center; justify-content: center; color: ${commonLabelColor};">No Data Available</div>`;
+      } else {
+        pie = new ApexCharts(pieRef.current, {
+          chart: { type: "pie", height: 300, foreColor: commonLabelColor },
+          theme: { mode: isDark ? "dark" : "light" },
+          series: pieSeries,
+          labels: ["Meter 1", "Meter 2", "Meter 3"],
+          colors: ["#6aa84f", "#cc0000", "#00bfff"] // Green, Red, Sky Blue
+        });
+        pie.render();
+      }
+    }
 
     return () => {
-      line.destroy();
-      bar.destroy();
-      pie.destroy();
+      if (line) line.destroy();
+      if (bar) bar.destroy();
+      if (pie) pie.destroy();
     };
-  }, [theme, chartData, selectedRange]); // Re-render chart when data/range changes
+  }, [theme, lineSeries, pieSeries, barData, selectedRange]); // Re-render chart when data/range changes
 
   return (
     <section
@@ -221,46 +353,29 @@ export default function EnergyMonitoringDashboard() {
           : {}
       }
     >
-      <div className="emd-topbar">
-        <div className="emd-breadcrumb">
-          Energy management / Energy Monitoring Dashboard
-        </div>
+      {!isPrinting && (
+        <div className="emd-topbar">
+          <div className="emd-breadcrumb">
+            Energy management / Energy Monitoring Dashboard
+          </div>
 
-        <div className="emd-actions">
-          <select
-            className="emd-select"
-            value={selectedRange}
-            onChange={(e) => setSelectedRange(e.target.value)}
-          >
-            <option>Last 6 hours</option>
-            <option>Last 24 hours</option>
-            <option>Last 7 days</option>
-          </select>
+          <div className="emd-actions">
+            <select
+              className="emd-select"
+              value={selectedRange}
+              onChange={(e) => setSelectedRange(e.target.value)}
+            >
+              <option>Last 6 hours</option>
+              <option>Last 24 hours</option>
+              <option>Last 7 days</option>
+            </select>
 
-          <button className="emd-btn">Download Daily Report</button>
-
-          <div className="emd-toggle">
-            <span>☀</span>
-            <label className="switch">
-              <input
-                type="checkbox"
-                onChange={() =>
-                  setTheme(theme === "light" ? "dark" : "light")
-                }
-              />
-              <span className="slider"></span>
-            </label>
-            <span>🌙</span>
+            <button className="emd-btn" onClick={downloadDailyReport}>Download Daily Report</button>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="emd-top-row">
-        <div className="emd-card power-card">
-          <h3>Power Consumption (WBSEDCL Line vs Generator)</h3>
-          <div className="chart-holder" ref={lineRef}></div>
-        </div>
-
         <div className="emd-kpi-grid">
           <div className="emd-card kpi">
             <p>Last 24 Hrs Energy Consumption</p>
@@ -282,20 +397,11 @@ export default function EnergyMonitoringDashboard() {
 
 
           <div className="emd-card kpi">
-            <p>Energy from Generator</p>
-            <h2 className="red">444 <span>kWh</span></h2>
-          </div>
-
-          <div className="emd-card kpi">
             <p>Last 24 Hrs Energy Cost</p>
 
             {hasRecords ? (
               <h2 className="green">
                 ₹{energyMetrics.totalCost.toFixed(0)}
-                <br />
-                {/* <small style={{ color: "#9ca3af", fontSize: "0.85rem" }}>
-        (₹{(energyMetrics.totalCost / 1000).toFixed(2)} K)
-      </small> */}
               </h2>
             ) : (
               <h2 style={{ color: "#9ca3af", fontSize: "1rem" }}>
@@ -303,6 +409,14 @@ export default function EnergyMonitoringDashboard() {
               </h2>
             )}
           </div>
+
+
+          <div className="emd-card kpi">
+            <p>Energy from Generator</p>
+            <h2 className="red">444 <span>kWh</span></h2>
+          </div>
+
+
 
 
           <div className="emd-card kpi">
@@ -328,18 +442,25 @@ export default function EnergyMonitoringDashboard() {
         </div>
       </div>
 
-      <div className="emd-grid">
-        <div className="emd-card span-2">
+      <div className="emd-middle-row">
+        <div className="emd-card power-card">
+          <h3>Power Consumption (WBSEDCL Line vs Generator)</h3>
+          <div className="chart-holder" ref={lineRef}></div>
+        </div>
+
+        <div className="emd-card segment-card">
+          <h3>Segment Wise Energy Consumption</h3>
+          <div ref={pieRef}></div>
+        </div>
+      </div>
+
+      <div className="emd-bottom-row">
+        <div className="emd-card hourly-card">
           <h3>Hourly Segment Wise Energy Consumption</h3>
           <div ref={barRef}></div>
         </div>
 
-        <div className="emd-card">
-          <h3>Segment Wise Energy Consumption</h3>
-          <div ref={pieRef}></div>
-        </div>
-
-        <div className="emd-card">
+        <div className="emd-card motor-card">
           <h3>Motor Running Status</h3>
 
           <div className="motor-row">
