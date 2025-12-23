@@ -1,14 +1,14 @@
 import React from "react";
 import Chart from "react-apexcharts";
 
-const HourlyEnergyConsumption = ({ theme }) => {
+const HourlyEnergyConsumption = ({ theme, data = [] }) => {
     const commonColor = theme === 'dark' ? '#f9fafb' : '#333';
     const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e0e0e0';
 
     const series = [
         {
             name: "Consumption",
-            data: [71, 79, 70, 92, 81, 65]
+            data: data
         }
     ];
 
@@ -59,11 +59,6 @@ const HourlyEnergyConsumption = ({ theme }) => {
             <div style={{ flex: 1, minHeight: 0 }}>
                 <Chart options={options} series={series} type="bar" height="100%" />
             </div>
-            {/* Footer Legend */}
-            {/* <div style={{ marginTop: '1.1vh', fontSize: '1.1vh', color: '#666', fontFamily: 'monospace' }}>
-                <span style={{ color: '#5cb85c', fontWeight: 'bold' }}>- </span>
-                _value (_field="kwh", _start="2022-05-25...")
-            </div> */}
         </div>
     );
 };

@@ -1,7 +1,12 @@
 import React from "react";
 import Chart from "react-apexcharts";
 
-const KiloWatt = ({ theme }) => {
+const KiloWatt = ({ theme, data = [], stats = { last: 0, min: 0, max: 0 } }) => {
+    // ... existing code ...
+
+    // ... (skipping unchanged parts) ...
+
+
     // Generate data that mimics the screenshot:
     // High plateau around 90-94, with frequent deep dips to ~35-40
     const generateData = () => {
@@ -48,7 +53,7 @@ const KiloWatt = ({ theme }) => {
     const series = [
         {
             name: "KW",
-            data: generateData(),
+            data: data.length > 0 ? data : [],
         },
     ];
 
@@ -77,8 +82,7 @@ const KiloWatt = ({ theme }) => {
         dataLabels: { enabled: false },
         xaxis: {
             type: "datetime",
-            min: new Date("2023-01-01 07:30").getTime(),
-            max: new Date("2023-01-01 13:10").getTime(),
+            // min and max removed to allow auto-scaling based on data
             tickAmount: 6,
             labels: {
                 datetimeUTC: false,
@@ -146,19 +150,19 @@ const KiloWatt = ({ theme }) => {
                     {/* Last */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                         <span style={{ color: '#1a73e8', fontSize: '1.3vh', fontWeight: 600, marginBottom: '0.2vh' }}>Last *</span>
-                        <span style={{ color: commonColor, fontWeight: 'bold', fontSize: '1.6vh' }}>84.6 kW</span>
+                        <span style={{ color: commonColor, fontWeight: 'bold', fontSize: '1.6vh' }}>{stats.last.toFixed(1)} kW</span>
                     </div>
 
                     {/* Min */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                         <span style={{ color: '#1a73e8', fontSize: '1.3vh', fontWeight: 600, marginBottom: '0.2vh' }}>Min</span>
-                        <span style={{ color: commonColor, fontWeight: 'bold', fontSize: '1.6vh' }}>35.6 kW</span>
+                        <span style={{ color: commonColor, fontWeight: 'bold', fontSize: '1.6vh' }}>{stats.min.toFixed(1)} kW</span>
                     </div>
 
                     {/* Max */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
                         <span style={{ color: '#1a73e8', fontSize: '1.3vh', fontWeight: 600, marginBottom: '0.2vh' }}>Max</span>
-                        <span style={{ color: commonColor, fontWeight: 'bold', fontSize: '1.6vh' }}>93.9 kW</span>
+                        <span style={{ color: commonColor, fontWeight: 'bold', fontSize: '1.6vh' }}>{stats.max.toFixed(1)} kW</span>
                     </div>
                 </div>
             </div>

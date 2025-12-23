@@ -1,28 +1,21 @@
 import React from 'react'
 
-const Power_Quality_Header = ({ theme, toggleTheme }) => {
+const Power_Quality_Header = ({ theme, toggleTheme, selectedRange, onRangeChange, onDownloadReport }) => {
     return (
         <div className="emd-topbar">
             <div className="emd-breadcrumb">Energy management / Power Quality Monitoring</div>
-            <div className="emd-actions">
-                <select className="emd-select">
-                    <option>Last 6 hours</option>
-                    <option>Last 24 hours</option>
-                    <option>Last 7 days</option>
+            <div className="emd-actions pdf-exclude">
+                <select
+                    className="emd-select"
+                    value={selectedRange}
+                    onChange={(e) => onRangeChange(e.target.value)}
+                >
+                    <option value="6h">Last 6 hours</option>
+                    <option value="24h">Last 24 hours</option>
+                    <option value="7d">Last 7 days</option>
                 </select>
-                <button className="emd-btn">Download Daily Report</button>
-                <div className="emd-toggle">
-                    <span>☀</span>
-                    <label className="switch">
-                        <input
-                            type="checkbox"
-                            checked={theme === 'dark'}
-                            onChange={toggleTheme}
-                        />
-                        <span className="slider"></span>
-                    </label>
-                    <span>🌙</span>
-                </div>
+                <button className="emd-btn" onClick={onDownloadReport}>Download Daily Report</button>
+
             </div>
         </div>
     )

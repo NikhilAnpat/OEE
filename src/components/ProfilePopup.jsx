@@ -39,7 +39,8 @@ function ProfilePopup({ isOpen, onClose }) {
     return (
         <>
             <div className="profile-overlay" onClick={handleClose}></div>
-            <div className="profile-popup">
+            <div className={view === 'menu' ? "profile-popup" : "profile-popup-centered"}>
+
                 {view === 'menu' ? (
                     <>
                         <div className="profile-header">
@@ -77,7 +78,7 @@ function ProfilePopup({ isOpen, onClose }) {
                 ) : view === 'edit-profile' ? (
                     <div className="profile-edit-view">
                         <div className="profile-edit-header">
-                            <button className="back-btn" onClick={() => setView('menu')}>←</button>
+                            <button className="back-btn" onClick={() => setView('menu')}>X</button>
                             <h3>Profile</h3>
                             <div style={{ width: '24px' }}></div>
                         </div>
@@ -121,7 +122,7 @@ function ProfilePopup({ isOpen, onClose }) {
                 ) : (
                     <div className="profile-edit-view">
                         <div className="profile-edit-header">
-                            <button className="back-btn" onClick={() => setView('menu')}>←</button>
+                            <button className="back-btn" onClick={() => setView('menu')}>X</button>
                             <h3>Security</h3>
                             <div style={{ width: '24px' }}></div>
                         </div>
