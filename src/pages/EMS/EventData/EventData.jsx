@@ -1,27 +1,15 @@
 import './EventData.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ClearFilter from '../../../assets/remove.png';
+import { eventRecordsApi } from '../../../services/oeeBeApi';
 
 function EventData() {
   const [theme, setTheme] = useState("light");
 
-
-
-  const initialData = [
-    { id: 6607, meter: 101, time: "2025-09-09 20:08:00", cur: 25.47, volt: 230.10, pf: 0.98, kw: 17.50, kwh: 1024.75 },
-    { id: 6592, meter: 102, time: "2025-09-09 14:29:51", cur: 28.18, volt: 229.62, pf: 0.98, kw: 5.43, kwh: 304.11 },
-    { id: 7592, meter: 103, time: "2025-09-09 14:29:51", cur: 28.18, volt: 229.62, pf: 0.98, kw: 5.43, kwh: 304.11 },
-    { id: 9592, meter: 104, time: "2025-09-09 14:29:51", cur: 28.18, volt: 229.62, pf: 0.98, kw: 5.43, kwh: 304.11 },
-    { id: 9492, meter: 105, time: "2025-09-09 14:29:51", cur: 28.18, volt: 229.62, pf: 0.98, kw: 5.43, kwh: 304.11 },
-    { id: 3592, meter: 106, time: "2025-09-09 14:29:51", cur: 28.18, volt: 229.62, pf: 0.98, kw: 5.43, kwh: 304.11 },
-    { id: 3192, meter: 107, time: "2025-09-09 14:29:51", cur: 28.18, volt: 229.62, pf: 0.98, kw: 5.43, kwh: 304.11 },
-    { id: 7692, meter: 108, time: "2025-09-09 14:29:51", cur: 28.18, volt: 229.62, pf: 0.98, kw: 5.43, kwh: 304.11 },
-    { id: 1692, meter: 109, time: "2025-09-09 14:29:51", cur: 28.18, volt: 229.62, pf: 0.98, kw: 5.43, kwh: 304.11 },
-    { id: 2692, meter: 110, time: "2025-09-09 14:29:51", cur: 28.18, volt: 229.62, pf: 0.98, kw: 5.43, kwh: 304.11 },
-    { id: 6618, meter: 111, time: "2025-12-17 09:08:00", cur: 26.47, volt: 231.10, pf: 0.99, kw: 18.50, kwh: 1025.75 },
-    { id: 6619, meter: 112, time: "2025-12-17 09:08:00", cur: 27.47, volt: 232.10, pf: 0.97, kw: 19.50, kwh: 1026.75 },
-    
-  ];
+  const [records, setRecords] = useState([]);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   
   const formatDateTime = (date) => {
@@ -41,59 +29,88 @@ function EventData() {
   const defaultEndDate = formatDateTime(now);
   const defaultStartDate = formatDateTime(thirtyDaysAgo);
 
-  const [alerts, setAlerts] = useState(() => {
-    
-    return initialData.filter(item => {
-      const itemDate = new Date(item.time);
-      return itemDate >= thirtyDaysAgo && itemDate <= now;
-    });
-  });
-
   const [selectedMeter, setSelectedMeter] = useState("All Meters");
   const [startDate, setStartDate] = useState(defaultStartDate);
   const [endDate, setEndDate] = useState(defaultEndDate);
 
+  const [appliedFilters, setAppliedFilters] = useState({
+    meterId: null,
+    start: defaultStartDate,
+    end: defaultEndDate,
+  });
+
   const alertsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
+  const formatOccurredAt = (value) => {
+    if (!value) return '';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    return d.toISOString().replace('T', ' ').slice(0, 19);
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      setErrorMessage('');
+      try {
+        const result = await eventRecordsApi.list({
+          meterId: appliedFilters.meterId,
+          start: appliedFilters.start,
+          end: appliedFilters.end,
+          page: currentPage,
+          limit: alertsPerPage,
+        });
+
+        if (!mounted) return;
+        const items = result?.items || [];
+        setTotalRecords(result?.total || 0);
+        setRecords(
+          items.map((r) => ({
+            id: r.eventId,
+            meter: r.meterId,
+            time: formatOccurredAt(r.occurredAt),
+            cur: r.avgCurrent,
+            volt: r.avgVoltage,
+            pf: r.avgPowerFactor,
+            kw: r.totalKW,
+            kwh: r.totalKWH,
+          }))
+        );
+      } catch (err) {
+        if (!mounted) return;
+        setErrorMessage(err?.message || 'Failed to load event records');
+        setRecords([]);
+        setTotalRecords(0);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [appliedFilters, currentPage]);
+
   const handleFilter = () => {
-    let filtered = initialData;
-
-
-    if (selectedMeter !== "All Meters") {
-      filtered = filtered.filter(
-        (item) => String(item.meter) === selectedMeter
-      );
-    }
-
-
-    if (startDate) {
-      filtered = filtered.filter(
-        (item) => new Date(item.time) >= new Date(startDate)
-      );
-    }
-
-    if (endDate) {
-      filtered = filtered.filter(
-        (item) => new Date(item.time) <= new Date(endDate)
-      );
-    }
-
-    setAlerts(filtered);
     setCurrentPage(1);
+    setAppliedFilters({
+      meterId: selectedMeter === 'All Meters' ? null : selectedMeter,
+      start: startDate || null,
+      end: endDate || null,
+    });
   };
 
   const handleClearFilter = () => {
     setSelectedMeter("All Meters");
-    setStartDate("");
-    setEndDate("");
-    setAlerts(initialData);
+    setStartDate(defaultStartDate);
+    setEndDate(defaultEndDate);
+    setAppliedFilters({ meterId: null, start: defaultStartDate, end: defaultEndDate });
     setCurrentPage(1);
   };
 
-  const totalPages = Math.ceil(alerts.length / alertsPerPage);
-  const startIndex = (currentPage - 1) * alertsPerPage;
-  const currentAlerts = alerts.slice(startIndex, startIndex + alertsPerPage);
+  const totalPages = Math.ceil(totalRecords / alertsPerPage) || 1;
+  const currentAlerts = records;
 
   return (<>
 
@@ -132,6 +149,10 @@ function EventData() {
       <h1 className="event-data-h1">
         Event Data
       </h1>
+
+      {errorMessage && (
+        <p style={{ textAlign: 'center', color: 'crimson' }}>{errorMessage}</p>
+      )}
 
       <div className="filter-bar">
         <div className="filter-group">
@@ -222,7 +243,10 @@ function EventData() {
           </tbody>
         </table>
       </div>
-      {alerts.length > alertsPerPage && (
+      {loading && (
+        <p style={{ textAlign: 'center', opacity: 0.6 }}>Loading...</p>
+      )}
+      {totalRecords > alertsPerPage && (
         <div className="pagination">
           <button
             className="page-btn prev"

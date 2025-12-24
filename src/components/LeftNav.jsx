@@ -23,7 +23,6 @@ function NavDropdown({ title, children }) {
 
 function LeftNav({ isNavOpen = true, setIsNavOpen, isMobile = false }) {
   const navigate = useNavigate();
-  const userEmail = localStorage.getItem('userEmail') || '';
   const userRole = localStorage.getItem('userRole') || 'user';
   const isAdmin = userRole === 'admin';
   
@@ -34,14 +33,16 @@ function LeftNav({ isNavOpen = true, setIsNavOpen, isMobile = false }) {
   // Check if user has access to a route
   const canAccessRoute = (route) => {
     if (isAdmin) return true;
-    return hasRouteAccess(userEmail, route);
+    return hasRouteAccess(route);
   };
 
   const handleLogout = () => {
     // Clear authentication data
+    localStorage.removeItem('authToken');
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userRole');
+    localStorage.removeItem('currentPermissions');
     // Redirect to login page
     navigate('/login');
     if (isMobile && setIsNavOpen) setIsNavOpen(false);

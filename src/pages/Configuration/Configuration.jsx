@@ -1,162 +1,202 @@
 import { useState, useEffect } from 'react';
 import ModuleLayout from '../../components/ModuleLayout';
 import {
-  getPermissions,
-  savePermissions,
-  resetPermissions,
   getAllModules,
   getEnergySubRoutes,
 } from '../../utils/permissions';
+import { usersApi, permissionsApi } from '../../services/oeeBeApi';
 import './Configuration.css';
 
 function Configuration() {
-  const [permissions, setPermissions] = useState(getPermissions());
-  const [selectedUserEmail, setSelectedUserEmail] = useState('');
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [permissions, setPermissions] = useState(null);
   const [expandedModules, setExpandedModules] = useState({});
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingPermissions, setLoadingPermissions] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const modules = getAllModules();
   const energySubRoutes = getEnergySubRoutes();
 
   useEffect(() => {
-    // Reload permissions to ensure they're up to date
-    const perms = getPermissions();
-    setPermissions(perms);
-    // Set default selected user to first user
-    if (perms.users.length > 0 && !selectedUserEmail) {
-      setSelectedUserEmail(perms.users[0].email);
-    }
+    let mounted = true;
+    (async () => {
+      setLoadingUsers(true);
+      setErrorMessage('');
+      try {
+        const rows = await usersApi.list();
+        if (!mounted) return;
+        setUsers(rows);
+        if (rows.length > 0) {
+          setSelectedUserId(String(rows[0].id));
+        }
+      } catch (err) {
+        if (!mounted) return;
+        setErrorMessage(err?.message || 'Failed to load users');
+      } finally {
+        if (mounted) setLoadingUsers(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Reload permissions when user selection changes
   useEffect(() => {
-    if (selectedUserEmail) {
-      const perms = getPermissions();
-      setPermissions(perms);
+    if (!selectedUserId) {
+      setPermissions(null);
+      return;
     }
-  }, [selectedUserEmail]);
 
-  const selectedUser = permissions.users.find(
-    (u) => u.email === selectedUserEmail
-  );
+    const user = users.find((u) => String(u.id) === String(selectedUserId));
+    if (!user) {
+      setPermissions(null);
+      return;
+    }
 
-  const handleUserSelect = (email) => {
-    setSelectedUserEmail(email);
+    let mounted = true;
+    (async () => {
+      setLoadingPermissions(true);
+      setErrorMessage('');
+      try {
+        const row = await permissionsApi.getByUserId(user.id);
+        if (!mounted) return;
+        setPermissions({
+          modules: row?.modules || {},
+          energySubRoutes: row?.energySubRoutes || {},
+        });
+      } catch (err) {
+        const message = err?.message || 'Failed to load permissions';
+        // If permissions are missing, create defaults for this user based on role.
+        if (message === 'Permissions not found') {
+          try {
+            const created = await permissionsApi.resetDefaults(user.id, user.role);
+            if (!mounted) return;
+            setPermissions({
+              modules: created?.modules || {},
+              energySubRoutes: created?.energySubRoutes || {},
+            });
+            return;
+          } catch (err2) {
+            if (!mounted) return;
+            setErrorMessage(err2?.message || message);
+          }
+        } else {
+          if (!mounted) return;
+          setErrorMessage(message);
+        }
+      } finally {
+        if (mounted) setLoadingPermissions(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedUserId, users]);
+
+  const selectedUser = users.find((u) => String(u.id) === String(selectedUserId)) || null;
+
+  const handleUserSelect = (userId) => {
+    setSelectedUserId(String(userId));
+  };
+
+  const persistPermissions = async (nextPermissions) => {
+    if (!selectedUser) return;
+    setErrorMessage('');
+    try {
+      const updated = await permissionsApi.updateByUserId(selectedUser.id, nextPermissions);
+      setPermissions({
+        modules: updated?.modules || {},
+        energySubRoutes: updated?.energySubRoutes || {},
+      });
+    } catch (err) {
+      setErrorMessage(err?.message || 'Failed to save permissions');
+    }
   };
 
   const handleModuleToggle = (moduleId, enabled) => {
-    if (!selectedUser) return;
+    if (!selectedUser || !permissions) return;
 
-    const updatedPermissions = { ...permissions };
-    const userIndex = updatedPermissions.users.findIndex(
-      (u) => u.email === selectedUserEmail
-    );
+    const next = {
+      modules: { ...permissions.modules, [moduleId]: enabled },
+      energySubRoutes: { ...permissions.energySubRoutes },
+    };
 
-    if (userIndex !== -1) {
-      updatedPermissions.users[userIndex].modules[moduleId] = enabled;
-      
-      // If disabling Energy module, disable all Energy sub-routes
-      if (moduleId === 'energy' && !enabled) {
-        Object.keys(updatedPermissions.users[userIndex].energySubRoutes).forEach(
-          (route) => {
-            updatedPermissions.users[userIndex].energySubRoutes[route] = false;
-          }
-        );
-      }
-
-      // If enabling module, enable all sub-routes (for Energy)
-      if (moduleId === 'energy' && enabled) {
-        Object.keys(updatedPermissions.users[userIndex].energySubRoutes).forEach(
-          (route) => {
-            updatedPermissions.users[userIndex].energySubRoutes[route] = true;
-          }
-        );
-      }
-
-      savePermissions(updatedPermissions);
-      setPermissions(updatedPermissions);
+    // If disabling Energy module, disable all Energy sub-routes
+    if (moduleId === 'energy' && !enabled) {
+      Object.keys(next.energySubRoutes).forEach((route) => {
+        next.energySubRoutes[route] = false;
+      });
     }
+
+    // If enabling Energy module, enable all sub-routes
+    if (moduleId === 'energy' && enabled) {
+      Object.keys(next.energySubRoutes).forEach((route) => {
+        next.energySubRoutes[route] = true;
+      });
+    }
+
+    setPermissions(next);
+    persistPermissions(next);
   };
 
   const handleEnableAllModule = (moduleId, enabled) => {
-    if (!selectedUser || moduleId !== 'energy') return;
+    if (!selectedUser || !permissions || moduleId !== 'energy') return;
 
-    const updatedPermissions = { ...permissions };
-    const userIndex = updatedPermissions.users.findIndex(
-      (u) => u.email === selectedUserEmail
-    );
+    const next = {
+      modules: { ...permissions.modules, [moduleId]: enabled },
+      energySubRoutes: { ...permissions.energySubRoutes },
+    };
 
-    if (userIndex !== -1) {
-      // Enable/disable all Energy sub-routes
-      Object.keys(updatedPermissions.users[userIndex].energySubRoutes).forEach(
-        (route) => {
-          updatedPermissions.users[userIndex].energySubRoutes[route] = enabled;
-        }
-      );
-      // Also update the main module
-      updatedPermissions.users[userIndex].modules[moduleId] = enabled;
+    Object.keys(next.energySubRoutes).forEach((route) => {
+      next.energySubRoutes[route] = enabled;
+    });
 
-      savePermissions(updatedPermissions);
-      setPermissions(updatedPermissions);
-    }
+    setPermissions(next);
+    persistPermissions(next);
   };
 
   const handleEnergySubRouteToggle = (routeId, enabled) => {
-    if (!selectedUser) return;
+    if (!selectedUser || !permissions) return;
 
-    const updatedPermissions = { ...permissions };
-    const userIndex = updatedPermissions.users.findIndex(
-      (u) => u.email === selectedUserEmail
-    );
+    const next = {
+      modules: { ...permissions.modules },
+      energySubRoutes: { ...permissions.energySubRoutes, [routeId]: enabled },
+    };
 
-    if (userIndex !== -1) {
-      updatedPermissions.users[userIndex].energySubRoutes[routeId] = enabled;
-      
-      // If enabling any Energy sub-route, enable Energy module
-      if (enabled) {
-        updatedPermissions.users[userIndex].modules.energy = true;
-      } else {
-        // If disabling, check if all sub-routes are now disabled
-        const allDisabled = Object.values(updatedPermissions.users[userIndex].energySubRoutes).every(
-          (val) => val === false
-        );
-        if (allDisabled) {
-          updatedPermissions.users[userIndex].modules.energy = false;
-        }
+    // If enabling any Energy sub-route, enable Energy module
+    if (enabled) {
+      next.modules.energy = true;
+    } else {
+      const allDisabled = Object.values(next.energySubRoutes).every((val) => val === false);
+      if (allDisabled) {
+        next.modules.energy = false;
       }
-
-      savePermissions(updatedPermissions);
-      setPermissions(updatedPermissions);
     }
+
+    setPermissions(next);
+    persistPermissions(next);
   };
 
   const handleGroupToggle = (groupName, routes, enabled) => {
-    if (!selectedUser) return;
+    if (!selectedUser || !permissions) return;
 
-    const updatedPermissions = { ...permissions };
-    const userIndex = updatedPermissions.users.findIndex(
-      (u) => u.email === selectedUserEmail
-    );
+    const next = {
+      modules: { ...permissions.modules },
+      energySubRoutes: { ...permissions.energySubRoutes },
+    };
 
-    if (userIndex !== -1) {
-      // Toggle all routes in this group
-      routes.forEach((route) => {
-        updatedPermissions.users[userIndex].energySubRoutes[route.id] = enabled;
-      });
+    routes.forEach((route) => {
+      next.energySubRoutes[route.id] = enabled;
+    });
 
-      // Check if all Energy sub-routes are now disabled
-      const allDisabled = Object.values(updatedPermissions.users[userIndex].energySubRoutes).every(
-        (val) => val === false
-      );
-      
-      if (allDisabled) {
-        updatedPermissions.users[userIndex].modules.energy = false;
-      } else {
-        updatedPermissions.users[userIndex].modules.energy = true;
-      }
+    const allDisabled = Object.values(next.energySubRoutes).every((val) => val === false);
+    next.modules.energy = !allDisabled;
 
-      savePermissions(updatedPermissions);
-      setPermissions(updatedPermissions);
-    }
+    setPermissions(next);
+    persistPermissions(next);
   };
 
 
@@ -191,39 +231,35 @@ function Configuration() {
               <label htmlFor="user-select">Select User:</label>
               <select
                 id="user-select"
-                value={selectedUserEmail}
+                value={selectedUserId}
                 onChange={(e) => {
                   handleUserSelect(e.target.value);
-                  // Reload permissions when user changes
-                  setPermissions(getPermissions());
                 }}
                 className="user-dropdown"
               >
                 <option value="">-- Select User --</option>
-                {permissions.users.map((user) => (
-                  <option key={user.email} value={user.email}>
-                    {user.email} ({user.role})
+                {users.map((user) => (
+                  <option key={user.id} value={String(user.id)}>
+                    {user.email} ({String(user.role).toLowerCase()})
                   </option>
                 ))}
               </select>
               <button
                 className="reset-permissions-btn"
                 onClick={() => {
-                  if (window.confirm('Reset all permissions to default? This will reset test user to only have Energy access.')) {
-                    resetPermissions();
-                    setPermissions(getPermissions());
-                    if (selectedUserEmail) {
-                      // Reload the selected user's permissions
-                      const updatedPerms = getPermissions();
-                      const updatedUser = updatedPerms.users.find(
-                        (u) => u.email === selectedUserEmail
-                      );
-                      if (updatedUser) {
-                        setSelectedUserEmail(selectedUserEmail); // Trigger re-render
-                      }
+                  if (!selectedUser) return;
+                  if (!window.confirm('Reset permissions to default for this user?')) return;
+                  (async () => {
+                    try {
+                      const row = await permissionsApi.resetDefaults(selectedUser.id, selectedUser.role);
+                      setPermissions({
+                        modules: row?.modules || {},
+                        energySubRoutes: row?.energySubRoutes || {},
+                      });
+                    } catch (err) {
+                      setErrorMessage(err?.message || 'Failed to reset permissions');
                     }
-                    alert('Permissions reset to default. Test user now only has Energy access.');
-                  }
+                  })();
                 }}
                 title="Reset to default permissions"
               >
@@ -233,14 +269,20 @@ function Configuration() {
           </div>
         </div>
 
-        {selectedUser ? (
+        {errorMessage && (
+          <div className="no-selection">
+            <p style={{ color: 'crimson' }}>{errorMessage}</p>
+          </div>
+        )}
+
+        {selectedUser && permissions ? (
           <div className="permissions-content-new">
             <div className="modules-list">
               {modules.map((module) => {
-                const hasAccess = selectedUser.modules[module.id] === true;
+                const hasAccess = permissions.modules?.[module.id] === true;
                 const isExpanded = expandedModules[module.id];
                 const isEnergy = module.id === 'energy';
-                const isAdmin = selectedUser.role === 'admin';
+                const isAdmin = String(selectedUser.role).toLowerCase() === 'admin';
 
                 return (
                   <div key={module.id} className="module-section">
@@ -286,10 +328,10 @@ function Configuration() {
                       <div className="module-sub-features">
                         {Object.entries(groupedEnergyRoutes).map(([group, routes]) => {
                           const allGroupRoutesEnabled = routes.every(
-                            (route) => selectedUser.energySubRoutes[route.id] === true
+                            (route) => permissions.energySubRoutes?.[route.id] === true
                           );
                           const hasAnyGroupRouteEnabled = routes.some(
-                            (route) => selectedUser.energySubRoutes[route.id] === true
+                            (route) => permissions.energySubRoutes?.[route.id] === true
                           );
 
                           return (
@@ -339,7 +381,7 @@ function Configuration() {
                               <div className="sub-feature-items">
                                 {routes.map((route) => {
                                   const hasSubAccess =
-                                    selectedUser.energySubRoutes[route.id] === true;
+                                    permissions.energySubRoutes?.[route.id] === true;
                                   return (
                                     <div key={route.id} className="sub-feature-item">
                                       <div className="sub-feature-info">
@@ -376,7 +418,11 @@ function Configuration() {
           </div>
         ) : (
           <div className="no-selection">
-            <p>Please select a user to manage their permissions</p>
+            <p>
+              {loadingUsers || loadingPermissions
+                ? 'Loading...'
+                : 'Please select a user to manage their permissions'}
+            </p>
           </div>
         )}
       </div>
