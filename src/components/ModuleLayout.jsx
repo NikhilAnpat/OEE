@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from './Header';
 import './ModuleLayout.css';
 
-function ModuleLayout({ children, moduleName, sidebarItems = [] }) {
+function ModuleLayout({ children, moduleName, sidebarItems = [], activeItem, onItemClick }) {
   const navigate = useNavigate();
   const [isNavOpen, setIsNavOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -53,7 +53,12 @@ function ModuleLayout({ children, moduleName, sidebarItems = [] }) {
               <ul className="module-nav-list">
                 {sidebarItems.map((item, index) => (
                   <li key={index}>
-                    <button className="module-nav-item">{item}</button>
+                    <button
+                      className={`module-nav-item ${activeItem === item ? 'active' : ''}`}
+                      onClick={() => onItemClick && onItemClick(item)}
+                    >
+                      {item}
+                    </button>
                   </li>
                 ))}
               </ul>
