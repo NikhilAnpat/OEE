@@ -1,7 +1,7 @@
 import React from "react";
 import Chart from "react-apexcharts";
 
-const HourlyEnergyConsumption = ({ theme, data = [] }) => {
+const HourlyEnergyConsumption = ({ theme, data = [], labels = [] }) => {
     const commonColor = theme === 'dark' ? '#f9fafb' : '#333';
     const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.1)' : '#e0e0e0';
 
@@ -30,7 +30,7 @@ const HourlyEnergyConsumption = ({ theme, data = [] }) => {
         },
         dataLabels: { enabled: false },
         xaxis: {
-            categories: ["08:30", "09:30", "10:30", "11:30", "12:30", "13:00"],
+            categories: labels,
             labels: {
                 style: { colors: commonColor }
             },
@@ -39,9 +39,13 @@ const HourlyEnergyConsumption = ({ theme, data = [] }) => {
         },
         yaxis: {
             min: 0,
-            max: 100,
             labels: {
+                formatter: (val) => `${val.toFixed(1)} kWh`,
                 style: { colors: commonColor }
+            },
+            title: {
+                text: "Consumption (kWh)",
+                style: { color: commonColor, fontWeight: 400 }
             },
         },
         grid: {

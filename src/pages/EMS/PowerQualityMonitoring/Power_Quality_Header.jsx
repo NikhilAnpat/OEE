@@ -1,10 +1,28 @@
 import React from 'react'
 
-const Power_Quality_Header = ({ theme, toggleTheme, selectedRange, onRangeChange, onDownloadReport }) => {
+const Power_Quality_Header = ({
+    theme,
+    toggleTheme,
+    selectedRange,
+    onRangeChange,
+    selectedMeter,
+    onMeterChange,
+    onDownloadReport
+}) => {
     return (
         <div className="emd-topbar">
             <div className="emd-breadcrumb">Energy management / Power Quality Monitoring</div>
             <div className="emd-actions pdf-exclude">
+                <select
+                    className="emd-select"
+                    value={selectedMeter}
+                    onChange={(e) => onMeterChange(e.target.value)}
+                >
+                    <option value="meter1">Meter 1</option>
+                    <option value="meter2">Meter 2</option>
+                    <option value="meter3">Meter 3</option>
+                </select>
+
                 <select
                     className="emd-select"
                     value={selectedRange}
