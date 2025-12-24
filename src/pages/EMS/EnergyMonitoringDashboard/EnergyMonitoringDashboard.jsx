@@ -309,7 +309,14 @@ export default function EnergyMonitoringDashboard() {
         },
         grid: {
           borderColor: gridColor,
-          padding: { bottom: 15 }
+          padding: { top: 5, bottom: 35, left: 15, right: 15 }
+        },
+        legend: {
+          show: true,
+          position: 'top',
+          horizontalAlign: 'right',
+          offsetY: -5,
+          markers: { radius: 12 }
         },
         stroke: { width: 3, curve: 'smooth' },
         markers: { size: 4, strokeWidth: 0, hover: { size: 6 } }, // Added markers for single-point visibility
@@ -334,10 +341,23 @@ export default function EnergyMonitoringDashboard() {
         },
         theme: { mode: isDark ? "dark" : "light" },
         series: barData.series,
-        xaxis: { categories: barData.labels },
+        xaxis: {
+          categories: barData.labels,
+          labels: {
+            show: true,
+            style: { colors: commonLabelColor }
+          }
+        },
         grid: {
           borderColor: gridColor,
-          padding: { bottom: 15 }
+          padding: { top: 5, bottom: 35, left: 15, right: 15 }
+        },
+        legend: {
+          show: true,
+          position: 'top',
+          horizontalAlign: 'right',
+          offsetY: -5,
+          markers: { radius: 12 }
         },
         colors: ["#6aa84f", "#cc0000", "#00bfff"] // Green, Red, Sky Blue
 
@@ -504,14 +524,14 @@ export default function EnergyMonitoringDashboard() {
 
         <div className="emd-card segment-card">
           <h3>Segment Wise Energy Consumption</h3>
-          <div ref={pieRef}></div>
+          <div className="pie-holder" ref={pieRef}></div>
         </div>
       </div>
 
       <div className="emd-bottom-row">
-        <div className="emd-card hourly-card" style={{ flex: 1 }}>
+        <div className="emd-card hourly-card">
           <h3>Hourly Segment Wise Energy Consumption</h3>
-          <div ref={barRef}></div>
+          <div className="chart-holder" ref={barRef}></div>
         </div>
       </div>
 

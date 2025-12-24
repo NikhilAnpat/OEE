@@ -108,16 +108,16 @@
 .emd-middle-row,
 .emd-bottom-row {
   display: flex;
-  gap: 16px;
+  gap: 20px;
   width: 100%;
-  margin-bottom: 3vh;
+  margin-bottom: 2vh;
   box-sizing: border-box;
 }
 
 .power-card,
 .hourly-card {
   flex: 2;
-  height: 48vh;
+  height: 55vh;
   display: flex;
   flex-direction: column;
 }
@@ -125,7 +125,7 @@
 .segment-card,
 .motor-card {
   flex: 1;
-  height: 48vh;
+  height: 55vh;
   display: flex;
   flex-direction: column;
 }
@@ -143,6 +143,14 @@
   flex: 1;
   width: 100%;
   min-height: 0;
+  position: relative;
+}
+
+.pie-holder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .emd-kpi-grid {
@@ -155,11 +163,11 @@
 
 .emd-card {
   background-color: white;
-  padding: 16px;
+  padding: 20px;
   box-shadow: var(--shadow);
   box-sizing: border-box;
   overflow: hidden;
-  /* Prevent content leaking during sidebar shifts */
+  /* Keep it clean */
 }
 
 .emd-card.kpi {
