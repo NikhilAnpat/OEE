@@ -63,13 +63,13 @@ const EnergyMonitoringPdfDownload = ({
                                     },
                                     stroke: { curve: 'smooth', width: 4 },
                                     grid: {
-                                        padding: { bottom: 20 },
+                                        padding: { bottom: 30, right: 15, left: 15 },
                                         borderColor: theme === "dark" ? "rgba(255,255,255,0.15)" : "#e5e7eb"
                                     },
                                     markers: { size: 6, strokeWidth: 0 },
                                     dataLabels: { enabled: true, style: { fontSize: '11px' } },
                                     colors: ["#6aa84f", "#cc0000", "#00bfff"],
-                                    legend: { show: true, position: 'bottom', markers: { width: 14, height: 14 } }
+                                    legend: { show: true, position: 'top', horizontalAlign: 'right', offsetY: 0, markers: { width: 14, height: 14, radius: 12 } }
                                 }}
                             />
                         </div>
@@ -130,7 +130,7 @@ const EnergyMonitoringPdfDownload = ({
                                     },
                                     stroke: { show: false, width: 0 },
                                     grid: {
-                                        padding: { bottom: 20 },
+                                        padding: { bottom: 30, right: 15, left: 15 },
                                         borderColor: theme === "dark" ? "rgba(255,255,255,0.15)" : "#e5e7eb"
                                     },
                                     plotOptions: {
@@ -138,7 +138,7 @@ const EnergyMonitoringPdfDownload = ({
                                     },
                                     dataLabels: { enabled: true, style: { fontSize: '11px', colors: ['#fff'] } },
                                     colors: ["#6aa84f", "#cc0000", "#00bfff"],
-                                    legend: { show: true, position: 'bottom', markers: { width: 14, height: 14 } }
+                                    legend: { show: true, position: 'top', horizontalAlign: 'right', offsetY: 0, markers: { width: 14, height: 14, radius: 12 } }
                                 }}
                             />
                         </div>

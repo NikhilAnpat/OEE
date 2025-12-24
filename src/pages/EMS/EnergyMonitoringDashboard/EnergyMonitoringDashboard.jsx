@@ -40,6 +40,9 @@ export default function EnergyMonitoringDashboard() {
       return ts >= kpiStartTime && ts <= now;
     });
 
+    // Sort to ensure we get the true latest record based on time, not just file order
+    kpiData.sort((a, b) => new Date(a.ts.replace("Z", "")).getTime() - new Date(b.ts.replace("Z", "")).getTime());
+
     if (kpiData.length === 0) {
       setEnergyMetrics({ totalConsumption: 0, totalCost: 0, maxDemand: 0 });
       setHasRecords(false); // Indicates no data for the MAIN KPI 24h view 
@@ -313,8 +316,8 @@ export default function EnergyMonitoringDashboard() {
         },
         legend: {
           show: true,
-          position: 'top',
-          horizontalAlign: 'right',
+          position: 'bottom',
+          horizontalAlign: 'center',
           offsetY: -5,
           markers: { radius: 12 }
         },
@@ -354,8 +357,8 @@ export default function EnergyMonitoringDashboard() {
         },
         legend: {
           show: true,
-          position: 'top',
-          horizontalAlign: 'right',
+          position: 'bottom',
+          horizontalAlign: 'center',
           offsetY: -5,
           markers: { radius: 12 }
         },
