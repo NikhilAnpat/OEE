@@ -90,7 +90,7 @@ export default function EnergyMonitoringDashboard() {
       startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     }
 
-    const filteredData = energyData.filter(item => {
+    let filteredData = energyData.filter(item => {
       if (!item.ts) return false;
       const ts = new Date(item.ts.replace("Z", ""));
       return ts >= startTime && ts <= now;
@@ -98,6 +98,17 @@ export default function EnergyMonitoringDashboard() {
 
     // Sort for graph
     filteredData.sort((a, b) => new Date(a.ts.replace("Z", "")).getTime() - new Date(b.ts.replace("Z", "")).getTime());
+
+    // Filter for unique last entries per day if 7 days is selected
+    if (selectedRange === "Last 7 days") {
+      const dailyMap = {};
+      filteredData.forEach(item => {
+        const dateStr = new Date(item.ts.replace("Z", "")).toDateString();
+        // Since it's sorted, the last encountering item for a date is the last hour entry
+        dailyMap[dateStr] = item;
+      });
+      filteredData = Object.values(dailyMap);
+    }
 
     if (filteredData.length === 0) {
       setLineSeries([]);
