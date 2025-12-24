@@ -21,7 +21,7 @@
     },
     {
         "DeviceId": "ECU1051Hub",
-        "ts": "2025-12-20T17:59:00Z",
+        "ts": "2025-12-22T17:59:00Z",
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 130,
         "#DEVICE_ERROR_meter2": -32764,
@@ -41,7 +41,7 @@
     },
     {
         "DeviceId": "ECU1051Hub",
-        "ts": "2025-12-19T18:59:00Z",
+        "ts": "2025-12-22T18:59:00Z",
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 140,
         "#DEVICE_ERROR_meter2": -32764,
@@ -61,7 +61,7 @@
     },
     {
         "DeviceId": "ECU1051Hub",
-        "ts": "2025-12-22T18:59:00Z",
+        "ts": "2025-12-22T19:59:00Z",
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 150,
         "#DEVICE_ERROR_meter2": -32764,
@@ -81,12 +81,11 @@
     },
     {
         "DeviceId": "ECU1051Hub",
-        "ts": "2025-12-22T17:59:00Z",
+        "ts": "2025-12-22T20:59:00Z",
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 160,
         "#DEVICE_ERROR_meter2": -32764,
-        "meter2:KW": 88,
-        "meter2:KWH": 30,
+        "meter2:KWH": 135,
         "#DEVICE_ERROR_meter3": 0,
         "meter3:KWH": 140,
         "EventProcessedUtcTime": "2025-12-17T19:00:55.4877247Z",
@@ -102,7 +101,7 @@
     },
     {
         "DeviceId": "ECU1051Hub",
-        "ts": "2025-12-22T16:59:00Z",
+        "ts": "2025-12-22T21:59:00Z",
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 170,
         "#DEVICE_ERROR_meter2": -32764,
@@ -122,7 +121,7 @@
     },
     {
         "DeviceId": "ECU1051Hub",
-        "ts": "2025-12-22T15:59:00Z",
+        "ts": "2025-12-22T22:59:00Z",
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 165,
         "#DEVICE_ERROR_meter2": -32764,
@@ -471,7 +470,7 @@
         "meter3:KWH": 150,
         "EventProcessedUtcTime": "2025-12-17T19:00:55.4877247Z",
         "PartitionId": 0,
-        "EventEnqueuedUtcTime": "2025-12-22T18:50:00.1020000Z",
+        "EventEnqueuedUtcTime": "2025-12-17T18:50:00.1020000Z",
         "IoTHub": {
             "MessageId": null,
             "CorrelationId": null,
