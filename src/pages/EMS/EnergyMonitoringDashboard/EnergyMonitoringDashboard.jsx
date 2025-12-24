@@ -4,6 +4,8 @@ import "./EnergyMonitoringDashboard.css";
 import energyData from "../../../services/Data.json";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import Chart from "react-apexcharts";
+import EnergyMonitoringPdfDownload from "./EnergyMonitoringPdfDownload";
 
 export default function EnergyMonitoringDashboard() {
   const [theme, setTheme] = useState("light");
@@ -191,16 +193,29 @@ export default function EnergyMonitoringDashboard() {
 
   const downloadDailyReport = async () => {
     setIsPrinting(true);
-    // Short delay to ensure the UI updates and "printing" styles are applied
-    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const element = document.querySelector(".emd-root");
+    // Wait for the Shadow Dashboard to render and the charts to initialize (Crucial for high-res dots)
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Capture the HIDDEN desktop version instead of the live mobile version
+    const element = document.querySelector(".emd-print-wrapper");
+    if (!element) return;
+
     const canvas = await html2canvas(element, {
-      scale: 2, // Higher scale for professional clarity
+      scale: 2,
       useCORS: true,
       logging: false,
       backgroundColor: theme === "dark" ? "#020617" : "#f9fafb",
+      width: 1400, // Explicitly capture 1400px
+      onclone: (clonedDoc) => {
+        const printEl = clonedDoc.querySelector(".emd-print-wrapper");
+        if (printEl) {
+          printEl.style.display = "block";
+          printEl.style.position = "static";
+        }
+      }
     });
+
 
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
@@ -238,6 +253,7 @@ export default function EnergyMonitoringDashboard() {
   };
 
 
+
   useEffect(() => {
     const isDark = theme === "dark";
     const commonLabelColor = isDark ? "#e5e7eb" : "#374151";
@@ -256,7 +272,8 @@ export default function EnergyMonitoringDashboard() {
       line = new ApexCharts(lineRef.current, {
         chart: {
           type: "line",
-          height: "80%",
+          height: "100%",
+          width: "100%",
           toolbar: { show: false },
           foreColor: commonLabelColor,
           zoom: { enabled: false }
@@ -279,7 +296,10 @@ export default function EnergyMonitoringDashboard() {
           labels: { style: { colors: commonLabelColor } },
           title: { text: "KWH", style: { color: commonLabelColor } }
         },
-        grid: { borderColor: gridColor },
+        grid: {
+          borderColor: gridColor,
+          padding: { bottom: 15 }
+        },
         stroke: { width: 3, curve: 'smooth' },
         markers: { size: 4, strokeWidth: 0, hover: { size: 6 } }, // Added markers for single-point visibility
         colors: ["#6aa84f", "#cc0000", "#00bfff"], // Green, Red, Sky Blue
@@ -296,15 +316,20 @@ export default function EnergyMonitoringDashboard() {
         chart: {
           type: "bar",
           stacked: true,
-          height: 260,
+          height: "100%",
+          width: "100%",
           toolbar: { show: false },
           foreColor: commonLabelColor
         },
         theme: { mode: isDark ? "dark" : "light" },
         series: barData.series,
         xaxis: { categories: barData.labels },
-        grid: { borderColor: gridColor },
+        grid: {
+          borderColor: gridColor,
+          padding: { bottom: 15 }
+        },
         colors: ["#6aa84f", "#cc0000", "#00bfff"] // Green, Red, Sky Blue
+
       });
       bar.render();
     }
@@ -318,11 +343,23 @@ export default function EnergyMonitoringDashboard() {
         pieRef.current.innerHTML = `<div style="height: 300px; display: flex; align-items: center; justify-content: center; color: ${commonLabelColor};">No Data Available</div>`;
       } else {
         pie = new ApexCharts(pieRef.current, {
-          chart: { type: "pie", height: 300, foreColor: commonLabelColor },
+          chart: {
+            type: "pie",
+            height: "100%",
+            width: "100%",
+            foreColor: commonLabelColor
+          },
           theme: { mode: isDark ? "dark" : "light" },
           series: pieSeries,
           labels: ["Meter 1", "Meter 2", "Meter 3"],
-          colors: ["#6aa84f", "#cc0000", "#00bfff"] // Green, Red, Sky Blue
+          colors: ["#6aa84f", "#cc0000", "#00bfff"], // Green, Red, Sky Blue
+          plotOptions: {
+            pie: {
+              dataLabels: {
+                offset: -20 // Pull labels inward to prevent overflow
+              }
+            }
+          }
         });
         pie.render();
       }
@@ -353,27 +390,33 @@ export default function EnergyMonitoringDashboard() {
           : {}
       }
     >
-      {!isPrinting && (
-        <div className="emd-topbar">
-          <div className="emd-breadcrumb">
-            Energy management / Energy Monitoring Dashboard
-          </div>
-
-          <div className="emd-actions">
-            <select
-              className="emd-select"
-              value={selectedRange}
-              onChange={(e) => setSelectedRange(e.target.value)}
-            >
-              <option>Last 6 hours</option>
-              <option>Last 24 hours</option>
-              <option>Last 7 days</option>
-            </select>
-
-            <button className="emd-btn" onClick={downloadDailyReport}>Download Daily Report</button>
-          </div>
+      <div className="emd-topbar">
+        <div className="emd-breadcrumb">
+          Energy management / Energy Monitoring Dashboard
         </div>
-      )}
+
+        <div className="emd-actions">
+          <select
+            className="emd-select"
+            value={selectedRange}
+            onChange={(e) => setSelectedRange(e.target.value)}
+          >
+            <option>Last 6 hours</option>
+            <option>Last 24 hours</option>
+            <option>Last 7 days</option>
+          </select>
+
+          <button
+            className="emd-btn"
+            onClick={downloadDailyReport}
+            disabled={isPrinting}
+          >
+            {isPrinting ? "Generating..." : "Download Daily Report"}
+          </button>
+
+        </div>
+      </div>
+
 
       <div className="emd-top-row">
         <div className="emd-kpi-grid">
@@ -455,45 +498,21 @@ export default function EnergyMonitoringDashboard() {
       </div>
 
       <div className="emd-bottom-row">
-        <div className="emd-card hourly-card">
+        <div className="emd-card hourly-card" style={{ flex: 1 }}>
           <h3>Hourly Segment Wise Energy Consumption</h3>
           <div ref={barRef}></div>
         </div>
-
-        <div className="emd-card motor-card">
-          <h3>Motor Running Status</h3>
-
-          <div className="motor-row">
-            <span>Silky Motor 1</span>
-            <div className="motor-bar">
-              <span className="on"></span>
-              <span className="on"></span>
-              <span className="off"></span>
-              <span className="on"></span>
-            </div>
-          </div>
-
-          <div className="motor-row">
-            <span>Whitener Motor 5</span>
-            <div className="motor-bar">
-              <span className="on"></span>
-              <span className="on"></span>
-              <span className="on"></span>
-              <span className="off"></span>
-            </div>
-          </div>
-
-          <div className="motor-row">
-            <span>Silky Motor 3</span>
-            <div className="motor-bar">
-              <span className="on"></span>
-              <span className="off"></span>
-              <span className="on"></span>
-              <span className="on"></span>
-            </div>
-          </div>
-        </div>
       </div>
+
+
+      <EnergyMonitoringPdfDownload
+        isPrinting={isPrinting}
+        theme={theme}
+        energyMetrics={energyMetrics}
+        lineSeries={lineSeries}
+        pieSeries={pieSeries}
+        barData={barData}
+      />
     </section>
   );
 }

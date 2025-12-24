@@ -1,14 +1,51 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { hasModuleAccess } from '../../utils/permissions';
 import './Dashboard.css';
+import '../../components/Header.css';
+
+// Assets
+import expand from "../../assets/expand.png";
+import notification from "../../assets/notification.png";
+import profile from "../../assets/user.png";
+
+// Components
+import NotificationPopup from "../../components/NotificationPopup";
+import ProfilePopup from "../../components/ProfilePopup";
 
 function Dashboard() {
   const navigate = useNavigate();
 
-  // Get user email and role from localStorage
+  // Header State
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Get user info from localStorage
   const userEmail = localStorage.getItem('userEmail') || '';
   const userRole = localStorage.getItem('userRole') || 'user';
   const isAdmin = userRole === 'admin';
+  const userName = userEmail.split('@')[0] || 'User';
+
+  const toggleNotification = () => {
+    setIsNotificationOpen((prev) => !prev);
+    setIsProfileOpen(false);
+  };
+
+  const toggleProfile = () => {
+    setIsProfileOpen((prev) => !prev);
+    setIsNotificationOpen(false);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
 
   const allModules = [
     { id: 'admin', name: 'ADMIN', icon: '⚙️', path: '/admin' },
@@ -49,15 +86,41 @@ function Dashboard() {
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
-        {/* <div className="dashboard-logo">
-          <span className="logo-icon">⚙️</span>
-          <span className="logo-text">DFX</span>
-        </div> */}
         <div className="dashboard-banner">
           <h1>Demo</h1>
+
+          <div className="header-right light-theme">
+            <span className="icon" onClick={toggleFullscreen}>
+              <img
+                src={expand}
+                alt="Expand"
+                title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              />
+            </span>
+            <span className="icon" onClick={toggleNotification}>
+              <img src={notification} alt="Notification" />
+            </span>
+            <div className="user-info">
+              <div className="user-name">{userName}</div>
+              <div className="user-role">{userRole}</div>
+            </div>
+            <span className="icon" onClick={toggleProfile}>
+              <img src={profile} alt="Profile" />
+            </span>
+          </div>
         </div>
       </div>
-      
+
+      <NotificationPopup
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+      />
+      <ProfilePopup
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+      />
+
+
       <div className="dashboard-content">
         <div className="modules-grid">
           {modules.map((module) => (
