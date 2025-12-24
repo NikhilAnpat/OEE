@@ -21,7 +21,11 @@
     },
     {
         "DeviceId": "ECU1051Hub",
+<<<<<<< HEAD
         "ts": "2025-12-22T17:59:00Z",
+=======
+        "ts": "2025-12-20T17:59:00Z",
+>>>>>>> alert_setup
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 130,
         "#DEVICE_ERROR_meter2": -32764,
@@ -41,7 +45,11 @@
     },
     {
         "DeviceId": "ECU1051Hub",
+<<<<<<< HEAD
         "ts": "2025-12-22T18:59:00Z",
+=======
+        "ts": "2025-12-19T18:59:00Z",
+>>>>>>> alert_setup
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 140,
         "#DEVICE_ERROR_meter2": -32764,
@@ -61,7 +69,11 @@
     },
     {
         "DeviceId": "ECU1051Hub",
+<<<<<<< HEAD
         "ts": "2025-12-22T19:59:00Z",
+=======
+        "ts": "2025-12-22T18:59:00Z",
+>>>>>>> alert_setup
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 150,
         "#DEVICE_ERROR_meter2": -32764,
@@ -81,7 +93,11 @@
     },
     {
         "DeviceId": "ECU1051Hub",
+<<<<<<< HEAD
         "ts": "2025-12-22T20:59:00Z",
+=======
+        "ts": "2025-12-22T17:59:00Z",
+>>>>>>> alert_setup
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 160,
         "#DEVICE_ERROR_meter2": -32764,
@@ -101,7 +117,11 @@
     },
     {
         "DeviceId": "ECU1051Hub",
+<<<<<<< HEAD
         "ts": "2025-12-22T21:59:00Z",
+=======
+        "ts": "2025-12-22T16:59:00Z",
+>>>>>>> alert_setup
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 170,
         "#DEVICE_ERROR_meter2": -32764,
@@ -121,7 +141,11 @@
     },
     {
         "DeviceId": "ECU1051Hub",
+<<<<<<< HEAD
         "ts": "2025-12-22T22:59:00Z",
+=======
+        "ts": "2025-12-22T15:59:00Z",
+>>>>>>> alert_setup
         "#DEVICE_ERROR_Meter1": 1230,
         "Meter1:KWH": 165,
         "#DEVICE_ERROR_meter2": -32764,

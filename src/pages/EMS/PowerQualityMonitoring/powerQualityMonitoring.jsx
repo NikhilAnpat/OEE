@@ -9,7 +9,7 @@ import "../EnergyMonitoringDashboard/EnergyMonitoringDashboard.css";
 import "./powerQualityMonitoring.css";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import EnergyMonitoringPdfDownload from "./EnergyMonitoringPdfDownload";
+import PowerQualityPdfDownload from "./PowerQualityPdfDownload";
 
 export default function PowerQualityMonitoring() {
     const [theme, setTheme] = useState("light");
@@ -47,7 +47,8 @@ export default function PowerQualityMonitoring() {
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
                 pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-                pdf.save(`Energy_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+                const fileName = `PowerQuality_Report_${selectedMeter.toUpperCase()}_${timeRange}_${new Date().toISOString().split('T')[0]}.pdf`;
+                pdf.save(fileName);
                 setIsPrinting(false);
             }).catch(err => {
                 console.error("PDF generation failed:", err);
@@ -221,24 +222,16 @@ export default function PowerQualityMonitoring() {
                     </div>
                 </div>
             </div>
-            <EnergyMonitoringPdfDownload
+            <PowerQualityPdfDownload
                 isPrinting={isPrinting}
                 theme={theme}
-                energyMetrics={{
-                    totalConsumption: stats.currentKWH,
-                    lastKW: stats.lastKW,
-                    minKW: stats.minKW,
-                    maxKW: stats.maxKW,
-                    maxConsumption: Math.max(...consumptionData, 0),
-                }}
-                lineSeries={[
-                    { name: "KW", data: kwData },
-                    { name: "KWH", data: kwhSeriesData }
-                ]}
-                barData={{
-                    labels: consumptionLabels,
-                    series: [{ name: "Consumption", data: consumptionData }]
-                }}
+                selectedMeter={selectedMeter}
+                timeRange={timeRange}
+                stats={stats}
+                kwData={kwData}
+                kwhSeriesData={kwhSeriesData}
+                consumptionData={consumptionData}
+                consumptionLabels={consumptionLabels}
             />
         </section>
     );
