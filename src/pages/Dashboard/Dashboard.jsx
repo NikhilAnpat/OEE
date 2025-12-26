@@ -71,7 +71,7 @@ function Dashboard() {
     }
     // Check module access using permissions system
     if (!isAdmin) {
-      return hasModuleAccess(userEmail, module.id);
+      return hasModuleAccess(module.id);
     }
     // Admin has access to everything
     return true;

@@ -1,69 +1,48 @@
 import "./Alerts.css";
 import { useState, useEffect } from "react";
+import { alertsApi } from "../../../services/oeeBeApi";
 
 function Alerts() {
   const [theme, setTheme] = useState("light");
   const [alerts, setAlerts] = useState([]);
+  const [totalAlerts, setTotalAlerts] = useState(0);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const alertsPerPage = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
-  const generateDummyAlerts = () => {
-    const alertMessages = [
-      { message: "Machine M1 - OEE dropped below 70%", severity: "critical" },
-      { message: "Machine M2 - Availability below threshold", severity: "warning" },
-      { message: "Machine M3 - Performance degradation detected", severity: "warning" },
-      { message: "Machine M4 - Quality issues detected", severity: "critical" },
-      { message: "Machine M1 - Downtime exceeded 30 minutes", severity: "critical" },
-      { message: "Machine M5 - Production rate below target", severity: "warning" },
-      { message: "Machine M2 - Setup time exceeded limit", severity: "info" },
-      { message: "Machine M6 - Minor stop detected", severity: "info" },
-      { message: "Machine M3 - Speed loss detected", severity: "warning" },
-      { message: "Machine M7 - Defect rate increased", severity: "critical" },
-      { message: "Machine M4 - Cycle time variance detected", severity: "warning" },
-      { message: "Machine M8 - Operator intervention required", severity: "info" },
-      { message: "Machine M1 - Temperature threshold exceeded", severity: "critical" },
-      { message: "Machine M9 - Maintenance required", severity: "warning" },
-      { message: "Machine M2 - Tool change needed", severity: "info" },
-      { message: "Machine M10 - Material shortage detected", severity: "critical" },
-      { message: "Machine M3 - Energy consumption spike", severity: "warning" },
-      { message: "Machine M5 - Scrap rate increased", severity: "critical" },
-      { message: "Machine M6 - Idle time exceeded", severity: "warning" },
-      { message: "Machine M7 - Shift target not met", severity: "info" }
-    ];
-
-    const now = new Date();
-    const dummyAlerts = alertMessages.map((alert, index) => {
-      const timestamp = new Date(now);
-      timestamp.setHours(8 + Math.floor(index / 2));
-      timestamp.setMinutes(Math.floor(Math.random() * 60));
-      timestamp.setSeconds(Math.floor(Math.random() * 60));
-
-      return {
-        id: `alert-${index + 1}`,
-        message: alert.message,
-        severity: alert.severity,
-        timestamp: timestamp.toISOString()
-      };
-    });
-
-    return dummyAlerts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  };
-
   useEffect(() => {
-    setAlerts(generateDummyAlerts());
-  }, []);
+    let mounted = true;
+    (async () => {
+      setErrorMessage("");
+      try {
+        const now = new Date();
+        const startOfDay = new Date(now);
+        startOfDay.setHours(0, 0, 0, 0);
+        const result = await alertsApi.list({
+          page: currentPage,
+          limit: alertsPerPage,
+          start: startOfDay.toISOString(),
+          end: now.toISOString(),
+        });
 
-  const totalPages = Math.ceil(alerts.length / alertsPerPage);
-  const startIndex = (currentPage - 1) * alertsPerPage;
-  const currentAlerts = alerts.slice(
-    startIndex,
-    startIndex + alertsPerPage
-  );
+        if (!mounted) return;
+        setAlerts(result?.items || []);
+        setTotalAlerts(result?.total || 0);
+      } catch (err) {
+        if (!mounted) return;
+        setErrorMessage(err?.message || 'Failed to load alerts');
+        setAlerts([]);
+        setTotalAlerts(0);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, [currentPage]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [alerts]);
+  const totalPages = Math.ceil(totalAlerts / alertsPerPage) || 1;
+  const currentAlerts = alerts;
 
   return (
     <div
@@ -98,6 +77,10 @@ function Alerts() {
       <div className="a-alert-container">
         <h1 className="a-alert-h1">Triggered Alerts (Today)</h1>
 
+        {errorMessage && (
+          <p style={{ textAlign: "center", color: "crimson" }}>{errorMessage}</p>
+        )}
+
         <div className="a-meter-container">
           {alerts.length === 0 && (
             <p style={{ textAlign: "center", opacity: 0.6 }}>
@@ -108,14 +91,13 @@ function Alerts() {
           {currentAlerts.map((alert) => (
             <div className="a-meter-row" key={alert.id}>
               <span className="a-meter-text">
-                [{new Date(alert.timestamp).toLocaleTimeString()}]{" "}
-                {alert.message}
+                [{new Date(alert.occurredAt).toLocaleTimeString()}] {alert.message}
               </span>
             </div>
           ))}
         </div>
 
-        {alerts.length > alertsPerPage && (
+        {totalAlerts > alertsPerPage && (
           <div className="pagination">
             <button
               className="page-btn prev"

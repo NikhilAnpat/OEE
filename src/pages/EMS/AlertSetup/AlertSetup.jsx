@@ -3,15 +3,14 @@ import { useState, useEffect } from "react";
 import EditAlertModal from "../../../models/ems/EditAlertModel";
 import deleteIcon from "../../../assets/trash.png";
 import editIcon from "../../../assets/edit.png";
+import { alertRulesApi } from "../../../services/oeeBeApi";
 
 
 function AlertSetup() {
   const [theme, setTheme] = useState("light");
 
-  const [alerts, setAlerts] = useState(() => {
-    const savedAlerts = localStorage.getItem("alertSetupAlerts");
-    return savedAlerts ? JSON.parse(savedAlerts) : [];
-  });
+  const [alerts, setAlerts] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingAlert, setEditingAlert] = useState(null);
@@ -23,32 +22,77 @@ function AlertSetup() {
   const [toastMessage, setToastMessage] = useState("");
 
   useEffect(() => {
-    localStorage.setItem("alertSetupAlerts", JSON.stringify(alerts));
-  }, [alerts]);
+    let mounted = true;
+    (async () => {
+      setErrorMessage("");
+      try {
+        const rows = await alertRulesApi.list();
+        if (!mounted) return;
+        const mapped = (rows || []).map((r) => ({
+          id: r.id,
+          meter: r.meterLabel,
+          parameter: r.parameter,
+          threshold: r.threshold,
+          message: r.message,
+        }));
+        setAlerts(mapped);
+      } catch (err) {
+        if (!mounted) return;
+        setErrorMessage(err?.message || 'Failed to load alert rules');
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleEdit = (alert) => {
     setEditingAlert({ ...alert });
     setIsEditOpen(true);
   };
 
-  const handleModalSave = (alertData) => {
-    if (alertData.id) {
+  const handleModalSave = async (alertData) => {
+    setErrorMessage("");
+    try {
+      const payload = {
+        meterLabel: alertData.meter,
+        parameter: alertData.parameter,
+        threshold: Number(alertData.threshold),
+        message: alertData.message,
+        isActive: true,
+      };
 
-      setAlerts(
-        alerts.map((a) => (a.id === alertData.id ? alertData : a))
-      );
-      setToastMessage("Alert updated successfully");
-    } else {
+      if (alertData.id) {
+        const updated = await alertRulesApi.update(alertData.id, payload);
+        const mapped = {
+          id: updated.id,
+          meter: updated.meterLabel,
+          parameter: updated.parameter,
+          threshold: updated.threshold,
+          message: updated.message,
+        };
+        setAlerts((prev) => prev.map((a) => (a.id === mapped.id ? mapped : a)));
+        setToastMessage("Alert updated successfully");
+      } else {
+        const created = await alertRulesApi.create(payload);
+        const mapped = {
+          id: created.id,
+          meter: created.meterLabel,
+          parameter: created.parameter,
+          threshold: created.threshold,
+          message: created.message,
+        };
+        setAlerts((prev) => [mapped, ...prev]);
+        setToastMessage("Alert added successfully");
+      }
 
-      const newAlert = { ...alertData, id: Date.now() };
-      setAlerts([...alerts, newAlert]);
-      setToastMessage("Alert added successfully");
+      setIsEditOpen(false);
+      setEditingAlert(null);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    } catch (err) {
+      setErrorMessage(err?.message || 'Failed to save alert rule');
     }
-
-    setIsEditOpen(false);
-    setEditingAlert(null);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000);
   };
 
   const handleDeleteClick = (id) => {
@@ -56,11 +100,19 @@ function AlertSetup() {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (alertToDelete) {
-      setAlerts(alerts.filter((a) => a.id !== alertToDelete));
+  const confirmDelete = async () => {
+    if (!alertToDelete) return;
+    setErrorMessage("");
+    try {
+      await alertRulesApi.remove(alertToDelete);
+      setAlerts((prev) => prev.filter((a) => a.id !== alertToDelete));
       setIsDeleteModalOpen(false);
       setAlertToDelete(null);
+      setToastMessage('Alert deleted successfully');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+    } catch (err) {
+      setErrorMessage(err?.message || 'Failed to delete alert rule');
     }
   };
 
@@ -104,6 +156,10 @@ function AlertSetup() {
 
       <div className="active-alert-section">
         <h1 className="alert-h1">Active Alert Rules</h1>
+
+        {errorMessage && (
+          <p style={{ textAlign: "center", color: "crimson" }}>{errorMessage}</p>
+        )}
 
         <div className="meter-container">
           {alerts.length === 0 && (

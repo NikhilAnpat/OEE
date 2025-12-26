@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authApi } from '../../services/oeeBeApi';
 import './Login.css';
 
 function Login() {
@@ -34,29 +35,30 @@ function Login() {
     };
   }, [navigate]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    // Normalize email to lowercase for comparison
-    const normalizedEmail = email.toLowerCase().trim();
-    const normalizedPassword = password.trim();
+    try {
+      const result = await authApi.login({
+        email: email.trim(),
+        password: password.trim(),
+      });
 
-    // Check credentials and assign role (case-insensitive email comparison)
-    if (normalizedEmail === 'nikhil@gmail.com' && normalizedPassword === '1234') {
-      // Admin user
+      localStorage.setItem('authToken', result.token);
       localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userEmail', email.trim()); // Store original email format
-      localStorage.setItem('userRole', 'admin');
+      localStorage.setItem('userEmail', result.user?.email || email.trim());
+      localStorage.setItem('userRole', (result.user?.role || 'USER').toLowerCase());
+
+      const currentPermissions = {
+        modules: result.permissions?.modules || {},
+        energySubRoutes: result.permissions?.energySubRoutes || {},
+      };
+      localStorage.setItem('currentPermissions', JSON.stringify(currentPermissions));
+
       navigate('/dashboard');
-    } else if (normalizedEmail === 'test@gmail.com' && normalizedPassword === '1234') {
-      // Regular user
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userEmail', email.trim()); // Store original email format
-      localStorage.setItem('userRole', 'user');
-      navigate('/dashboard');
-    } else {
-      setError('Invalid email or password');
+    } catch (err) {
+      setError(err.message || 'Invalid email or password');
     }
   };
 

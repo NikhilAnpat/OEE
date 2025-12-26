@@ -1,186 +1,80 @@
-// Permissions management utility
+// Permissions helper for the current logged-in user.
+//
+// Backend login returns the user's permissions, which are stored in:
+// - localStorage.currentPermissions: { modules: {...}, energySubRoutes: {...} }
+// - localStorage.userRole: 'admin' | 'user' (lowercased in Login.jsx)
 
-// Default permissions structure
-const DEFAULT_PERMISSIONS = {
-  users: [
-    {
-      email: 'nikhil@gmail.com',
-      role: 'admin',
-      modules: {
-        admin: true,
-        configuration: true,
-        checklist: true,
-        mint: true,
-        energy: true,
-        quality: true,
-        console: true,
-        productivity: true,
-        'dfx-ai': true,
-        'datonis-bi': true,
-        documents: true,
-        maintenance: true,
-        designer: true,
-      },
-      energySubRoutes: {
-        'digital-input': true,
-        'digital-output': true,
-        'analog-input': true,
-        'analog-output': true,
-        'machine-dashboard': true,
-        'oee-dashboard': true,
-        report: true,
-        'energy-consumption': true,
-        'energy-monitoring-dashboard': true,
-        'power-quality-monitoring': true,
-        alerts: true,
-        'alert-setup': true,
-        'event-data': true,
-      },
-    },
-    {
-      email: 'test@gmail.com',
-      role: 'user',
-      modules: {
-        admin: false,
-        configuration: false,
-        checklist: false,
-        mint: false,
-        energy: true,
-        quality: true,
-        console: true,
-        productivity: false,
-        'dfx-ai': false,
-        'datonis-bi': false,
-        documents: false,
-        maintenance: false,
-        designer: false,
-      },
-      energySubRoutes: {
-        'digital-input': true,
-        'digital-output': false,
-        'analog-input': false,
-        'analog-output': false,
-        'machine-dashboard': false,
-        'oee-dashboard': false,
-        report: true,
-        'energy-consumption': true,
-        'energy-monitoring-dashboard': true,
-        'power-quality-monitoring': true,
-        alerts: true,
-        'alert-setup': true,
-        'event-data': true,
-      },
-    },
-  ],
-};
+const ENERGY_SUBROUTE_IDS = [
+  'digital-input',
+  'digital-output',
+  'analog-input',
+  'analog-output',
+  'machine-dashboard',
+  'oee-dashboard',
+  'report',
+  'energy-consumption',
+  'energy-monitoring-dashboard',
+  'power-quality-monitoring',
+  'alerts',
+  'alert-setup',
+  'event-data',
+];
 
-// Get permissions from localStorage or return default
-export const getPermissions = () => {
+function safeJsonParse(value, fallback) {
   try {
-    const stored = localStorage.getItem('userPermissions');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      // Ensure all default users exist in stored permissions
-      const merged = { ...DEFAULT_PERMISSIONS };
-      DEFAULT_PERMISSIONS.users.forEach((defaultUser) => {
-        const existingUser = parsed.users.find(
-          (u) => u.email.toLowerCase() === defaultUser.email.toLowerCase()
-        );
-        if (existingUser) {
-          // Merge existing user with default to ensure all modules are present
-          const userIndex = parsed.users.findIndex(
-            (u) => u.email.toLowerCase() === defaultUser.email.toLowerCase()
-          );
-          parsed.users[userIndex] = {
-            ...defaultUser,
-            ...parsed.users[userIndex],
-            modules: { ...defaultUser.modules, ...parsed.users[userIndex].modules },
-            energySubRoutes: {
-              ...defaultUser.energySubRoutes,
-              ...parsed.users[userIndex].energySubRoutes,
-            },
-          };
-        } else {
-          // Add default user if not exists
-          parsed.users.push(defaultUser);
-        }
-      });
-      return parsed;
-    }
-    // Initialize with default permissions
-    localStorage.setItem('userPermissions', JSON.stringify(DEFAULT_PERMISSIONS));
-    return DEFAULT_PERMISSIONS;
-  } catch (error) {
-    console.error('Error loading permissions:', error);
-    // Reset to default on error
-    localStorage.setItem('userPermissions', JSON.stringify(DEFAULT_PERMISSIONS));
-    return DEFAULT_PERMISSIONS;
+    if (!value) return fallback;
+    return JSON.parse(value);
+  } catch {
+    return fallback;
   }
+}
+
+function getRole() {
+  const role = (localStorage.getItem('userRole') || '').toLowerCase();
+  return role || 'user';
+}
+
+function normalizeRoute(route) {
+  if (!route) return '';
+  const trimmed = String(route).trim();
+  if (!trimmed) return '';
+  return trimmed;
+}
+
+export const getCurrentPermissions = () => {
+  const parsed = safeJsonParse(localStorage.getItem('currentPermissions'), null);
+  if (!parsed || typeof parsed !== 'object') return { modules: {}, energySubRoutes: {} };
+  return {
+    modules: parsed.modules && typeof parsed.modules === 'object' ? parsed.modules : {},
+    energySubRoutes:
+      parsed.energySubRoutes && typeof parsed.energySubRoutes === 'object' ? parsed.energySubRoutes : {},
+  };
 };
 
-// Reset permissions to default
-export const resetPermissions = () => {
-  localStorage.setItem('userPermissions', JSON.stringify(DEFAULT_PERMISSIONS));
-  return DEFAULT_PERMISSIONS;
+export const hasModuleAccess = (moduleId) => {
+  if (!moduleId) return false;
+  if (getRole() === 'admin') return true;
+  const perms = getCurrentPermissions();
+  return perms.modules?.[moduleId] === true;
 };
 
-// Save permissions to localStorage
-export const savePermissions = (permissions) => {
-  try {
-    localStorage.setItem('userPermissions', JSON.stringify(permissions));
-    return true;
-  } catch (error) {
-    console.error('Error saving permissions:', error);
-    return false;
-  }
-};
+export const hasRouteAccess = (route) => {
+  const normalized = normalizeRoute(route);
+  if (!normalized) return false;
+  if (getRole() === 'admin') return true;
 
-// Get user permissions by email
-export const getUserPermissions = (email) => {
-  const permissions = getPermissions();
-  const user = permissions.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-  return user || null;
-};
+  const perms = getCurrentPermissions();
 
-// Check if user has access to a module
-export const hasModuleAccess = (email, moduleId) => {
-  const user = getUserPermissions(email);
-  if (!user) return false;
-  if (user.role === 'admin') return true; // Admin has access to everything
-  return user.modules[moduleId] === true;
-};
+  // App sometimes passes energy routes as: 'digital-input' (no slash)
+  // LeftNav passes energy routes as: 'digital-input'
+  // Other modules pass routes as: '/checklist', '/quality', etc.
+  const routeId = normalized.startsWith('/') ? normalized.slice(1) : normalized;
 
-// Check if user has access to a route
-export const hasRouteAccess = (email, route) => {
-  const user = getUserPermissions(email);
-  if (!user) return false;
-  if (user.role === 'admin') return true; // Admin has access to everything
-
-  // Check if route is an Energy sub-route
-  const energySubRoutes = [
-    'digital-input',
-    'digital-output',
-    'analog-input',
-    'analog-output',
-    'machine-dashboard',
-    'oee-dashboard',
-    'report',
-    'energy-consumption',
-    'energy-monitoring-dashboard',
-    'power-quality-monitoring',
-    'alerts',
-    'alert-setup',
-    'event-data',
-  ];
-
-  if (energySubRoutes.includes(route)) {
-    // Check if user has access to Energy module first
-    if (!user.modules.energy) return false;
-    // Then check specific sub-route
-    return user.energySubRoutes[route] === true;
+  if (ENERGY_SUBROUTE_IDS.includes(routeId)) {
+    if (perms.modules?.energy !== true) return false;
+    return perms.energySubRoutes?.[routeId] === true;
   }
 
-  // For other routes, check module access
   const moduleMap = {
     '/admin': 'admin',
     '/configuration': 'configuration',
@@ -196,67 +90,11 @@ export const hasRouteAccess = (email, route) => {
     '/designer': 'designer',
   };
 
-  const moduleId = moduleMap[route];
-  if (moduleId) {
-    return user.modules[moduleId] === true;
-  }
+  const routeWithSlash = normalized.startsWith('/') ? normalized : `/${normalized}`;
+  const moduleId = moduleMap[routeWithSlash];
+  if (!moduleId) return false;
 
-  return false;
-};
-
-// Update user permissions
-export const updateUserPermissions = (email, updates) => {
-  const permissions = getPermissions();
-  const userIndex = permissions.users.findIndex(
-    (u) => u.email.toLowerCase() === email.toLowerCase()
-  );
-
-  if (userIndex === -1) {
-    // User doesn't exist, create new user
-    permissions.users.push({
-      email,
-      role: 'user',
-      modules: {},
-      energySubRoutes: {},
-      ...updates,
-    });
-  } else {
-    // Update existing user
-    permissions.users[userIndex] = {
-      ...permissions.users[userIndex],
-      ...updates,
-    };
-  }
-
-  return savePermissions(permissions);
-};
-
-// Add new user
-export const addUser = (email, role = 'user') => {
-  const permissions = getPermissions();
-  
-  // Check if user already exists
-  if (permissions.users.find((u) => u.email.toLowerCase() === email.toLowerCase())) {
-    return false; // User already exists
-  }
-
-  permissions.users.push({
-    email,
-    role,
-    modules: {},
-    energySubRoutes: {},
-  });
-
-  return savePermissions(permissions);
-};
-
-// Delete user
-export const deleteUser = (email) => {
-  const permissions = getPermissions();
-  permissions.users = permissions.users.filter(
-    (u) => u.email.toLowerCase() !== email.toLowerCase()
-  );
-  return savePermissions(permissions);
+  return perms.modules?.[moduleId] === true;
 };
 
 // Get all modules list

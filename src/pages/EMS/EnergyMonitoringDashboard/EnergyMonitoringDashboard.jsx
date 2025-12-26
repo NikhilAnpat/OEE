@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import ApexCharts from "apexcharts";
 import "./EnergyMonitoringDashboard.css";
-import energyData from "../../../services/Data.json";
+import { energyReadingsApi } from "../../../services/oeeBeApi";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Chart from "react-apexcharts";
@@ -10,6 +10,9 @@ import EnergyMonitoringPdfDownload from "./EnergyMonitoringPdfDownload";
 export default function EnergyMonitoringDashboard() {
   const [theme, setTheme] = useState("light");
   const [selectedRange, setSelectedRange] = useState("Last 24 hours"); // Track selected range
+
+  const [energyData, setEnergyData] = useState([]);
+  const [dataError, setDataError] = useState("");
 
   const [energyMetrics, setEnergyMetrics] = useState({
     totalConsumption: 0,
@@ -27,6 +30,37 @@ export default function EnergyMonitoringDashboard() {
   const lineRef = useRef(null);
   const barRef = useRef(null);
   const pieRef = useRef(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        setDataError("");
+        const now = new Date();
+        const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const rows = await energyReadingsApi.list({
+          start: start.toISOString(),
+          end: now.toISOString(),
+          limit: 5000,
+        });
+
+        if (!mounted) return;
+        const mapped = (rows || []).map((r) => {
+          const raw = r?.raw && typeof r.raw === 'object' ? r.raw : {};
+          const ts = raw.ts || r?.ts;
+          return { ...raw, ts };
+        });
+        setEnergyData(mapped);
+      } catch (err) {
+        if (!mounted) return;
+        setDataError(err?.message || 'Failed to load energy data');
+        setEnergyData([]);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   // Calculate 24-Hour KPI Metrics (Fixed)
   useEffect(() => {
@@ -77,7 +111,7 @@ export default function EnergyMonitoringDashboard() {
         maxDemand: maxKW / 1000 // Keep for the Max Demand card
       });
     }
-  }, []); // Runs once on mount
+  }, [energyData]); // Runs whenever energy data loads/changes
 
 
   // Calculate Graph Data (Dynamic based on Filter)
@@ -203,7 +237,7 @@ export default function EnergyMonitoringDashboard() {
       ]
     });
 
-  }, [selectedRange]); // Runs whenever filter changes
+  }, [selectedRange, energyData]); // Runs whenever filter changes or data loads
 
   const downloadDailyReport = async () => {
     setIsPrinting(true);
@@ -450,6 +484,10 @@ export default function EnergyMonitoringDashboard() {
 
         </div>
       </div>
+
+        {dataError && (
+          <div style={{ padding: '8px 16px', color: 'crimson' }}>{dataError}</div>
+        )}
 
 
       <div className="emd-top-row">
