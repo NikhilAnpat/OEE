@@ -49,7 +49,7 @@ function Dashboard() {
 
   const allModules = [
     { id: 'admin', name: 'ADMIN', icon: '⚙️', path: '/admin' },
-    { id: 'configuration', name: 'CONFIGURATION', icon: '⚙️', path: '/configuration', adminOnly: true },
+    { id: 'configuration', name: 'CONFIGURATION', icon: '⚙️', path: '/configuration'},
     { id: 'checklist', name: 'CHECKLIST', icon: '📄', path: '/checklist' },
     { id: 'mint', name: 'MINT', icon: '⚙️', path: '/mint' },
     { id: 'energy', name: 'ENERGY', icon: '⚡', path: '/digital-input' },

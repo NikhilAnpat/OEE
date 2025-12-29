@@ -25,8 +25,8 @@ function LeftNav({ isNavOpen = true, setIsNavOpen, isMobile = false }) {
   const navigate = useNavigate();
   const userEmail = localStorage.getItem('userEmail') || '';
   const userRole = localStorage.getItem('userRole') || 'user';
-  const isAdmin = userRole === 'admin';
-  
+  const isAdmin = userRole.toLowerCase() === 'admin';
+
   const handleLinkClick = () => {
     if (isMobile && setIsNavOpen) setIsNavOpen(false);
   };

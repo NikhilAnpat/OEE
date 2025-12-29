@@ -24,7 +24,6 @@ export default function PowerQualityMonitoring() {
     const downloadPDF = () => {
         setIsPrinting(true);
 
-        // Wait for component to render
         setTimeout(() => {
             const input = document.getElementById("pdf-report-content");
             if (!input) {
@@ -62,10 +61,7 @@ export default function PowerQualityMonitoring() {
             (a, b) => new Date(a.ts) - new Date(b.ts)
         );
 
-        const lastTimestamp =
-            sortedData.length > 0
-                ? new Date(sortedData[sortedData.length - 1].ts).getTime()
-                : Date.now();
+        const lastTimestamp = Date.now();
 
         let rangeMs = 6 * 60 * 60 * 1000;
         if (timeRange === "24h") rangeMs = 24 * 60 * 60 * 1000;
@@ -163,7 +159,6 @@ export default function PowerQualityMonitoring() {
 
             <div className="main-block" style={{ gap: "2.7vh" }}>
                 <div className="first-block">
-                    <div className="spacer-block"></div>
                     <div className="kwh-card">
                         <h2 className="kwh-title">KWH</h2>
                         <span className="kwh-value">{stats.currentKWH} kWh</span>
@@ -196,7 +191,7 @@ export default function PowerQualityMonitoring() {
                 </div>
 
                 <div className="second-block">
-                    <div className="spacer-block"></div>
+
 
                     <div className="kwh-card">
                         <h2 className="kwh-title">KWH</h2>
