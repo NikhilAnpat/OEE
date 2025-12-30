@@ -184,3 +184,22 @@ export const energyReadingsApi = {
     }
   },
 };
+
+export const blobApi = {
+  async ecuData() {
+    try {
+      const { data } = await httpClient.get('/api/blob/ecu-data');
+      return data;
+    } catch (err) {
+      throw new Error(unwrapError(err));
+    }
+  },
+  async ecuDataRaw() {
+    try {
+      const { data } = await httpClient.get('/api/blob/ecu-data/raw');
+      return data;
+    } catch (err) {
+      throw new Error(unwrapError(err));
+    }
+  },
+};

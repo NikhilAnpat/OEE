@@ -1,55 +1,47 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import ApexCharts from "apexcharts";
 import "./EnergyMonitoringDashboard.css";
-import { energyReadingsApi } from "../../../services/oeeBeApi";
+import { blobApi } from "../../../services/oeeBeApi";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Chart from "react-apexcharts";
 import EnergyMonitoringPdfDownload from "./EnergyMonitoringPdfDownload";
 
 export default function EnergyMonitoringDashboard() {
-  const [theme, setTheme] = useState("light");
+  const [theme, _setTheme] = useState("light");
   const [selectedRange, setSelectedRange] = useState("Last 24 hours"); // Track selected range
 
   const [energyData, setEnergyData] = useState([]);
   const [dataError, setDataError] = useState("");
-
-  const [energyMetrics, setEnergyMetrics] = useState({
-    totalConsumption: 0,
-    totalCost: 0,
-    maxDemand: 0
-  });
-
-  // State for chart series
-  const [lineSeries, setLineSeries] = useState([]);
-  const [pieSeries, setPieSeries] = useState([0, 0, 0]);
-  const [barData, setBarData] = useState({ series: [], labels: [] });
-  const [hasRecords, setHasRecords] = useState(true);
   const [isPrinting, setIsPrinting] = useState(false); // State to handle PDF generation visibility
 
   const lineRef = useRef(null);
   const barRef = useRef(null);
   const pieRef = useRef(null);
 
+  const toNumber = (v) => {
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+    if (typeof v === 'string') {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    }
+    return 0;
+  };
+
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         setDataError("");
-        const now = new Date();
-        const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const rows = await energyReadingsApi.list({
-          start: start.toISOString(),
-          end: now.toISOString(),
-          limit: 5000,
-        });
-
+        const payload = await blobApi.ecuData();
         if (!mounted) return;
-        const mapped = (rows || []).map((r) => {
-          const raw = r?.raw && typeof r.raw === 'object' ? r.raw : {};
-          const ts = raw.ts || r?.ts;
-          return { ...raw, ts };
-        });
+
+        const rawData = payload?.data;
+        const rows = Array.isArray(rawData) ? rawData : (rawData ? [rawData] : []);
+        const mapped = rows
+          .filter((r) => r && typeof r === 'object')
+          .map((r) => ({ ...r, ts: r.ts }));
+
         setEnergyData(mapped);
       } catch (err) {
         if (!mounted) return;
@@ -63,59 +55,58 @@ export default function EnergyMonitoringDashboard() {
   }, []);
 
   // Calculate 24-Hour KPI Metrics (Fixed)
-  useEffect(() => {
+  const { energyMetrics, hasRecords } = useMemo(() => {
     const now = new Date();
-    // Fixed Window: Last 24 Hours
     const kpiStartTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    const kpiData = energyData.filter(item => {
-      if (!item.ts) return false;
-      const ts = new Date(item.ts.replace("Z", ""));
+    const kpiData = (energyData || []).filter((item) => {
+      if (!item?.ts) return false;
+      const ts = new Date(String(item.ts).replace("Z", ""));
       return ts >= kpiStartTime && ts <= now;
     });
 
-    // Sort to ensure we get the true latest record based on time, not just file order
-    kpiData.sort((a, b) => new Date(a.ts.replace("Z", "")).getTime() - new Date(b.ts.replace("Z", "")).getTime());
+    kpiData.sort(
+      (a, b) =>
+        new Date(String(a.ts).replace("Z", "")).getTime() -
+        new Date(String(b.ts).replace("Z", "")).getTime()
+    );
 
     if (kpiData.length === 0) {
-      setEnergyMetrics({ totalConsumption: 0, totalCost: 0, maxDemand: 0 });
-      setHasRecords(false); // Indicates no data for the MAIN KPI 24h view 
-    } else {
-      setHasRecords(true);
+      return {
+        hasRecords: false,
+        energyMetrics: { totalConsumption: 0, totalCost: 0, maxDemand: 0 },
+      };
+    }
 
-      let totalM1 = 0;
-      let totalM2 = 0;
-      let totalM3 = 0;
-      const kwValues = [];
+    const kwValues = [];
+    kpiData.forEach((entry) => {
+      const m1 = toNumber(entry["Meter1:KWH"]);
+      const m2 = toNumber(entry["meter2:KWH"]);
+      const m3 = toNumber(entry["meter3:KWH"]);
+      kwValues.push(m1 + m2 + m3);
+    });
 
-      kpiData.forEach(entry => {
-        const m1 = typeof entry["Meter1:KWH"] === 'number' ? entry["Meter1:KWH"] : 0;
-        const m2 = typeof entry["meter2:KWH"] === 'number' ? entry["meter2:KWH"] : 0;
-        const m3 = typeof entry["meter3:KWH"] === 'number' ? entry["meter3:KWH"] : 0;
-        kwValues.push(m1 + m2 + m3);
-      });
+    const latest = kpiData[kpiData.length - 1];
+    const m1Latest = toNumber(latest["Meter1:KWH"]);
+    const m2Latest = toNumber(latest["meter2:KWH"]);
+    const m3Latest = toNumber(latest["meter3:KWH"]);
 
-      // Simple sum of all three meters from the latest record as requested
-      const latest = kpiData[kpiData.length - 1];
-      const m1Latest = typeof latest["Meter1:KWH"] === 'number' ? latest["Meter1:KWH"] : 0;
-      const m2Latest = typeof latest["meter2:KWH"] === 'number' ? latest["meter2:KWH"] : 0;
-      const m3Latest = typeof latest["meter3:KWH"] === 'number' ? latest["meter3:KWH"] : 0;
+    const combinedTotal = m1Latest + m2Latest + m3Latest;
+    const maxKW = kwValues.length > 0 ? Math.max(...kwValues) : 0;
+    const COST_PER_KWH = 7;
 
-      const combinedTotal = m1Latest + m2Latest + m3Latest;
-      const maxKW = kwValues.length > 0 ? Math.max(...kwValues) : 0;
-      const COST_PER_KWH = 7;
-
-      setEnergyMetrics({
+    return {
+      hasRecords: true,
+      energyMetrics: {
         totalConsumption: combinedTotal,
         totalCost: combinedTotal * COST_PER_KWH,
-        maxDemand: maxKW / 1000 // Keep for the Max Demand card
-      });
-    }
-  }, [energyData]); // Runs whenever energy data loads/changes
-
+        maxDemand: maxKW / 1000,
+      },
+    };
+  }, [energyData]);
 
   // Calculate Graph Data (Dynamic based on Filter)
-  useEffect(() => {
+  const { lineSeries, pieSeries, barData } = useMemo(() => {
     const now = new Date();
     let startTime;
 
@@ -127,34 +118,35 @@ export default function EnergyMonitoringDashboard() {
       startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     }
 
-    let filteredData = energyData.filter(item => {
-      if (!item.ts) return false;
-      const ts = new Date(item.ts.replace("Z", ""));
+    let filteredData = (energyData || []).filter((item) => {
+      if (!item?.ts) return false;
+      const ts = new Date(String(item.ts).replace("Z", ""));
       return ts >= startTime && ts <= now;
     });
 
-    // Sort for graph
-    filteredData.sort((a, b) => new Date(a.ts.replace("Z", "")).getTime() - new Date(b.ts.replace("Z", "")).getTime());
+    filteredData.sort(
+      (a, b) =>
+        new Date(String(a.ts).replace("Z", "")).getTime() -
+        new Date(String(b.ts).replace("Z", "")).getTime()
+    );
 
-    // Filter for unique last entries per day if 7 days is selected
     if (selectedRange === "Last 7 days") {
       const dailyMap = {};
-      filteredData.forEach(item => {
-        const dateStr = new Date(item.ts.replace("Z", "")).toDateString();
-        // Since it's sorted, the last encountering item for a date is the last hour entry
+      filteredData.forEach((item) => {
+        const dateStr = new Date(String(item.ts).replace("Z", "")).toDateString();
         dailyMap[dateStr] = item;
       });
       filteredData = Object.values(dailyMap);
     }
 
     if (filteredData.length === 0) {
-      setLineSeries([]);
-      setPieSeries([0, 0, 0]);
-      setBarData({ series: [], labels: [] });
-      return;
+      return {
+        lineSeries: [],
+        pieSeries: [0, 0, 0],
+        barData: { series: [], labels: [] },
+      };
     }
 
-    // 1. Prepare Line Series & Pie Data
     const m1Data = [];
     const m2Data = [];
     const m3Data = [];
@@ -162,11 +154,11 @@ export default function EnergyMonitoringDashboard() {
     let totalM2 = 0;
     let totalM3 = 0;
 
-    filteredData.forEach(entry => {
-      const ts = new Date(entry.ts.replace("Z", "")).getTime();
-      const val1 = typeof entry["Meter1:KWH"] === 'number' ? entry["Meter1:KWH"] : 0;
-      const val2 = typeof entry["meter2:KWH"] === 'number' ? entry["meter2:KWH"] : 0;
-      const val3 = typeof entry["meter3:KWH"] === 'number' ? entry["meter3:KWH"] : 0;
+    filteredData.forEach((entry) => {
+      const ts = new Date(String(entry.ts).replace("Z", "")).getTime();
+      const val1 = toNumber(entry["Meter1:KWH"]);
+      const val2 = toNumber(entry["meter2:KWH"]);
+      const val3 = toNumber(entry["meter3:KWH"]);
 
       m1Data.push([ts, val1]);
       m2Data.push([ts, val2]);
@@ -177,15 +169,12 @@ export default function EnergyMonitoringDashboard() {
       totalM3 += val3;
     });
 
-    // FIX: If there is only one data point, add a duplicate point at "now" 
-    // to force ApexCharts to draw a line instead of a single dot.
     if (filteredData.length === 1) {
       const ts = m1Data[0][0];
       const val1 = m1Data[0][1];
       const val2 = m2Data[0][1];
       const val3 = m3Data[0][1];
       const nowTs = now.getTime();
-
       if (ts < nowTs) {
         m1Data.push([nowTs, val1]);
         m2Data.push([nowTs, val2]);
@@ -193,11 +182,9 @@ export default function EnergyMonitoringDashboard() {
       }
     }
 
-    // 3. Prepare Bar Chart Data (Hourly Aggregation)
     const hourlyAggregation = {};
-
-    filteredData.forEach(entry => {
-      const ts = new Date(entry.ts.replace("Z", ""));
+    filteredData.forEach((entry) => {
+      const ts = new Date(String(entry.ts).replace("Z", ""));
       let bucket;
       if (selectedRange === "Last 7 days") {
         bucket = ts.toLocaleDateString([], { day: '2-digit', month: 'short' });
@@ -209,35 +196,33 @@ export default function EnergyMonitoringDashboard() {
         hourlyAggregation[bucket] = { m1: 0, m2: 0, m3: 0 };
       }
 
-      hourlyAggregation[bucket].m1 += typeof entry["Meter1:KWH"] === 'number' ? entry["Meter1:KWH"] : 0;
-      hourlyAggregation[bucket].m2 += typeof entry["meter2:KWH"] === 'number' ? entry["meter2:KWH"] : 0;
-      hourlyAggregation[bucket].m3 += typeof entry["meter3:KWH"] === 'number' ? entry["meter3:KWH"] : 0;
+      hourlyAggregation[bucket].m1 += toNumber(entry["Meter1:KWH"]);
+      hourlyAggregation[bucket].m2 += toNumber(entry["meter2:KWH"]);
+      hourlyAggregation[bucket].m3 += toNumber(entry["meter3:KWH"]);
     });
 
     const labelsForBar = Object.keys(hourlyAggregation);
-    const barM1 = labelsForBar.map(l => hourlyAggregation[l].m1);
-    const barM2 = labelsForBar.map(l => hourlyAggregation[l].m2);
-    const barM3 = labelsForBar.map(l => hourlyAggregation[l].m3);
+    const barM1 = labelsForBar.map((l) => hourlyAggregation[l].m1);
+    const barM2 = labelsForBar.map((l) => hourlyAggregation[l].m2);
+    const barM3 = labelsForBar.map((l) => hourlyAggregation[l].m3);
 
-    // Final State Updates
-    setLineSeries([
-      { name: "Meter 1", data: m1Data },
-      { name: "Meter 2", data: m2Data },
-      { name: "Meter 3", data: m3Data }
-    ]);
-
-    setPieSeries([totalM1, totalM2, totalM3]);
-
-    setBarData({
-      labels: labelsForBar,
-      series: [
-        { name: "Meter 1", data: barM1 },
-        { name: "Meter 2", data: barM2 },
-        { name: "Meter 3", data: barM3 }
-      ]
-    });
-
-  }, [selectedRange, energyData]); // Runs whenever filter changes or data loads
+    return {
+      lineSeries: [
+        { name: "Meter 1", data: m1Data },
+        { name: "Meter 2", data: m2Data },
+        { name: "Meter 3", data: m3Data },
+      ],
+      pieSeries: [totalM1, totalM2, totalM3],
+      barData: {
+        labels: labelsForBar,
+        series: [
+          { name: "Meter 1", data: barM1 },
+          { name: "Meter 2", data: barM2 },
+          { name: "Meter 3", data: barM3 },
+        ],
+      },
+    };
+  }, [selectedRange, energyData]);
 
   const downloadDailyReport = async () => {
     setIsPrinting(true);
