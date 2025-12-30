@@ -2,53 +2,6 @@ import React from "react";
 import Chart from "react-apexcharts";
 
 const KiloWatt = ({ theme, data = [], kwhData = [], stats = { last: 0, min: 0, max: 0 } }) => {
-    // ... existing code ...
-
-    // ... (skipping unchanged parts) ...
-
-
-    // Generate data that mimics the screenshot:
-    // High plateau around 90-94, with frequent deep dips to ~35-40
-    const generateData = () => {
-        const data = [];
-        let currentTime = new Date("2023-01-01 07:30").getTime();
-        const endTime = new Date("2023-01-01 13:00").getTime();
-
-        // Pattern: High for a bit, then dip, then high
-        let phase = 0; // 0 = high, 1 = dropping, 2 = low, 3 = rising
-
-        while (currentTime <= endTime) {
-            let value;
-            // Simple logic to create the "dip" pattern
-            const cyclePos = (currentTime % 3600000) / 3600000; // 1 hour cycle approximately
-
-            // Customize to look like the image roughly:
-            // stable around 68 initially, then jump to 90s, then dips
-
-            const hour = new Date(currentTime).getHours();
-            const minutes = new Date(currentTime).getMinutes();
-
-            if (hour < 8) {
-                value = 67 + Math.random();
-            } else if (hour === 8 && minutes < 20) {
-                value = 66 + Math.random(); // slight dip before rise
-            } else {
-                // High oscillating with deep dips
-                // Create drops every ~45 mins
-                if (cyclePos > 0.3 && cyclePos < 0.45) {
-                    // The Dip
-                    value = 35 + Math.random() * 5;
-                } else {
-                    // The High
-                    value = 90 + Math.random() * 4;
-                }
-            }
-
-            data.push([currentTime, parseFloat(value.toFixed(1))]);
-            currentTime += 10 * 60 * 1000; // 10 min intervals
-        }
-        return data;
-    };
 
     const series = [
         {
@@ -72,7 +25,19 @@ const KiloWatt = ({ theme, data = [], kwhData = [], stats = { last: 0, min: 0, m
             zoom: { enabled: false },
             toolbar: { show: false },
             background: 'transparent',
-            animations: { enabled: false } // Disable animations to ensure instant render
+            animations: {
+                enabled: true,
+                easing: 'easeinout',
+                speed: 800,
+                animateGradually: {
+                    enabled: true,
+                    delay: 150
+                },
+                dynamicAnimation: {
+                    enabled: true,
+                    speed: 350
+                }
+            }
         },
         stroke: {
             curve: "smooth",
@@ -100,7 +65,7 @@ const KiloWatt = ({ theme, data = [], kwhData = [], stats = { last: 0, min: 0, m
         yaxis: [
             {
                 min: 30,
-                max: 100,
+                max: 10,
                 tickAmount: 7,
                 labels: {
                     formatter: (val) => `${val.toFixed(0)} kW`,
@@ -121,7 +86,7 @@ const KiloWatt = ({ theme, data = [], kwhData = [], stats = { last: 0, min: 0, m
                 },
                 title: {
                     text: "KWH",
-                    style: { color: "#e91e63", fontWeight: 600 }
+                    style: { color: "#e91e63", fontWeight: 800 , fontSize: '1vh' }
                 },
             }
         ],
