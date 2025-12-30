@@ -31,6 +31,8 @@ function ProfilePopup({ isOpen, onClose }) {
         localStorage.removeItem('isAuthenticated');
         localStorage.removeItem('userEmail');
         localStorage.removeItem('userRole');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userData');
         // Redirect to login page
         navigate('/login');
         onClose();

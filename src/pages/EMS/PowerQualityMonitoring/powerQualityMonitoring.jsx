@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Power_Quality_Header from "./Power_Quality_Header";
-import { energyReadingsApi } from "../../../services/oeeBeApi";
+import rawData from "../../../services/Data.json";
 import KiloWatt from "./KiloWatt";
 import VoltageImbalance from "./VoltageImbalance";
 import HourlyEnergyConsumption from "./HourlyEnergyConsumption";
@@ -16,40 +16,6 @@ export default function PowerQualityMonitoring() {
     const [selectedMeter, setSelectedMeter] = useState("meter1");
     const [timeRange, setTimeRange] = useState("6h");
     const [isPrinting, setIsPrinting] = useState(false);
-    const [rawData, setRawData] = useState([]);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        const normalizeRow = (row) => {
-            const raw = row?.raw && typeof row.raw === 'object' ? row.raw : {};
-            return {
-                ...raw,
-                ts: row?.ts || raw.ts,
-                DeviceId: row?.deviceId || raw.DeviceId,
-                deviceId: row?.deviceId || raw.deviceId,
-            };
-        };
-
-        const load = async () => {
-            try {
-                const rows = await energyReadingsApi.list({ limit: 5000 });
-                if (cancelled) return;
-                setRawData(Array.isArray(rows) ? rows.map(normalizeRow) : []);
-            } catch (e) {
-                if (cancelled) return;
-                setRawData([]);
-                console.error('Failed to load energy readings:', e);
-            }
-        };
-
-        load();
-        const t = setInterval(load, 60_000);
-        return () => {
-            cancelled = true;
-            clearInterval(t);
-        };
-    }, []);
 
     const toggleTheme = () => {
         setTheme((prev) => (prev === "light" ? "dark" : "light"));
@@ -58,7 +24,6 @@ export default function PowerQualityMonitoring() {
     const downloadPDF = () => {
         setIsPrinting(true);
 
-        // Wait for component to render
         setTimeout(() => {
             const input = document.getElementById("pdf-report-content");
             if (!input) {
@@ -96,10 +61,7 @@ export default function PowerQualityMonitoring() {
             (a, b) => new Date(a.ts) - new Date(b.ts)
         );
 
-        const lastTimestamp =
-            sortedData.length > 0
-                ? new Date(sortedData[sortedData.length - 1].ts).getTime()
-                : Date.now();
+        const lastTimestamp = Date.now();
 
         let rangeMs = 6 * 60 * 60 * 1000;
         if (timeRange === "24h") rangeMs = 24 * 60 * 60 * 1000;
@@ -197,7 +159,6 @@ export default function PowerQualityMonitoring() {
 
             <div className="main-block" style={{ gap: "2.7vh" }}>
                 <div className="first-block">
-                    <div className="spacer-block"></div>
                     <div className="kwh-card">
                         <h2 className="kwh-title">KWH</h2>
                         <span className="kwh-value">{stats.currentKWH} kWh</span>
@@ -230,7 +191,7 @@ export default function PowerQualityMonitoring() {
                 </div>
 
                 <div className="second-block">
-                    <div className="spacer-block"></div>
+
 
                     <div className="kwh-card">
                         <h2 className="kwh-title">KWH</h2>

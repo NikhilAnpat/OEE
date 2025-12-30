@@ -22,7 +22,6 @@
     width: 50%;
 }
 
-/* Overrides for Header Scaling (vh based) */
 .emd-breadcrumb {
     font-size: 2.2vh !important;
 }
@@ -41,7 +40,6 @@
     font-size: 2vh !important;
 }
 
-/* Switch Toggle Scaling */
 .switch {
     width: 4.4vh !important;
     height: 2.2vh !important;
@@ -63,7 +61,6 @@
 }
 
 
-/* Meter Selection Row */
 .meter-row {
     display: flex;
     align-items: center;
@@ -86,8 +83,6 @@
     border: 1px solid var(--border-color);
     border-radius: 0.4vh;
     padding: 0.6vh 1.1vh;
-    /* display: flex; */
-    /* align-items: center; */
     gap: 0.9vh;
     cursor: pointer;
     color: var(--text-main);
@@ -101,7 +96,6 @@
     color: var(--text-main);
 }
 
-/* KWH Card */
 .kwh-card {
     background: var(--card-bg);
 
@@ -129,10 +123,10 @@
     color: #d32f2f;
 }
 
-/* Chart Cards (Large) */
+
 .chart-card {
     background: var(--card-bg);
-    padding: 2.2vh;
+    padding: 2.5vh;
     border-radius: 0.9vh;
     box-shadow: var(--shadow);
     height: 60.5vh;
@@ -158,11 +152,10 @@
 }
 
 .spacer-block {
-    height: 7.1vh;
+    height: 2vh;
     margin-bottom: 2vh;
 }
 
-/* Responsive Overrides */
 @media (max-width: 768px) {
     .main-block {
         flex-direction: column;
@@ -180,7 +173,6 @@
 
 @media (max-width: 690px) {
 
-    /* Mobile text readability overrides - prevent tiny text from small VH */
     .meter-btn,
     .meter-dropdown,
     .chart-title {
@@ -206,7 +198,6 @@
         height: auto;
         min-height: 200px;
 
-        /* Reduced for less mobile clutter */
         padding: 12px;
     }
 
@@ -222,7 +213,6 @@
         font-size: 14px !important;
     }
 
-    /* Stack items better */
     .meter-row {
         flex-wrap: wrap;
     }

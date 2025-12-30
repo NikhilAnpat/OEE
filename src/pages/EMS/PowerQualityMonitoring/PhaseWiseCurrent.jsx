@@ -44,7 +44,7 @@ const PhaseWiseCurrent = ({ theme }) => {
             zoom: { enabled: false },
             toolbar: { show: false },
             background: 'transparent',
-            animations: { enabled: false }
+            animations: { enabled: true }
         },
         stroke: {
             curve: "smooth",
