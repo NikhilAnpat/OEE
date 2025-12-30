@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './Admin.css';
 import { usersApi } from '../../services/oeeBeApi';
+import { toast } from '../../components/Toast';
 
 function Users({ onCreateClick, onEditClick }) {
     const [users, setUsers] = useState([]);
@@ -16,8 +17,7 @@ function Users({ onCreateClick, onEditClick }) {
                     : Array.isArray(data?.data)
                     ? data.data
                     : [];
-               
-                setUsers(list);
+                    setUsers(list);
                 setLoading(false);
             })
             .catch((err) => {
@@ -93,9 +93,9 @@ function Users({ onCreateClick, onEditClick }) {
                                                                 try {
                                                                     await usersApi.remove(user.id);
                                                                     setUsers(prev => prev.filter(u => u.id !== user.id));
-                                                                    alert('User deleted successfully!');
+                                                                    toast.success('User deleted successfully!');
                                                                 } catch (err) {
-                                                                    alert(err?.message || 'Failed to delete user');
+                                                                    toast.error(err?.message || 'Failed to delete user');
                                                                 }
                                                             }
                                                         }}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './Admin.css';
 import { usersApi } from '../../services/oeeBeApi';
+import { toast } from '../../components/Toast';
 
 function CreateUser({ onCancel }) {
     const [formData, setFormData] = useState({
@@ -38,7 +39,7 @@ function CreateUser({ onCancel }) {
         e.preventDefault();
 
         if (formData.password !== formData.confirmPassword) {
-            alert("Passwords do not match!");
+            toast.error("Passwords do not match!");
             return;
         }
 
@@ -60,11 +61,11 @@ function CreateUser({ onCancel }) {
 
             await usersApi.create(payload);
 
-            alert('User created successfully!');
+            toast.success('User created successfully!');
             if (onCancel) onCancel();
         } catch (error) {
             console.error('Failed to create user:', error);
-            alert(`Failed to create user: ${error.message}`);
+            toast.error(`Failed to create user: ${error.message}`);
         } finally {
             setLoading(false);
         }

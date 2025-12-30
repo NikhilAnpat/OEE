@@ -31,12 +31,14 @@ import Documents from './pages/Documents/Documents';
 import Maintenance from './pages/Maintenance/Maintenance';
 import Designer from './pages/Designer/Designer';
 import './App.css';
+import { ToastContainer } from './components/Toast';
 
 function App() {
 
   return (
-    <Router>
-      <Routes>
+    <>
+      <Router>
+        <Routes>
         <Route path="/login" element={<Login />} />
         <Route
           path="/dashboard"
@@ -265,7 +267,9 @@ function App() {
           />
         </Route>
       </Routes>
-    </Router>
+      </Router>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
+    </>
   );
 }
 

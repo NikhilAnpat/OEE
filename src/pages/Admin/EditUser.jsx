@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Admin.css';
 import { usersApi } from '../../services/oeeBeApi';
+import { toast } from '../../components/Toast';
 
 function EditUser({ user, onCancel }) {
     const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ function EditUser({ user, onCancel }) {
         email: '',
         phone: '',
         countryCode: '+91',
+        companyName: '',
         role: 'Admin',
         status: 'Active',
         password: '',
@@ -30,6 +32,7 @@ function EditUser({ user, onCancel }) {
                 email: user.email || '',
                 phone: user.mobile_no || user.phone || '',
                 countryCode: user.country_code || '+91',
+                companyName: user.company_name || user.companyName || '',
                 role: (user.role || 'USER').toUpperCase(),
                 status: user.status || 'Active',
                 password: '',
@@ -70,7 +73,7 @@ function EditUser({ user, onCancel }) {
                 password: formData.password || undefined,
             };
             await usersApi.update(user.id, payload);
-            alert('User updated successfully!');
+            toast.success('User updated successfully!');
             if (onCancel) onCancel();
         } catch (err) {
             setError(err.message || 'Failed to update user');
@@ -207,7 +210,7 @@ function EditUser({ user, onCancel }) {
                                     placeholder="Enter company name"
                                     value={formData.companyName}
                                     onChange={handleChange}
-                                
+                                    required
                                 />
                             </div>
 
