@@ -1,8 +1,6 @@
-
-
-
 import React, { useState, useEffect } from 'react';
 import './Admin.css';
+import { usersApi } from '../../services/oeeBeApi';
 
 function EditUser({ user, onCancel }) {
     const [formData, setFormData] = useState({
@@ -10,6 +8,7 @@ function EditUser({ user, onCancel }) {
         lastName: '',
         email: '',
         phone: '',
+        countryCode: '+91',
         role: 'Admin',
         status: 'Active',
         password: '',
@@ -18,15 +17,20 @@ function EditUser({ user, onCancel }) {
 
     const [photoPreview, setPhotoPreview] = useState(null);
 
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
     useEffect(() => {
         if (user) {
-            const [firstName, ...lastNameParts] = user.name.split(' ');
+            const fullName = user.full_name || user.name || '';
+            const [firstName, ...lastNameParts] = fullName.split(' ');
             setFormData({
                 firstName: firstName || '',
                 lastName: lastNameParts.join(' ') || '',
                 email: user.email || '',
-                phone: user.phone || '',
-                role: user.role || 'Admin',
+                phone: user.mobile_no || user.phone || '',
+                countryCode: user.country_code || '+91',
+                role: (user.role || 'USER').toUpperCase(),
                 status: user.status || 'Active',
                 password: '',
                 confirmPassword: ''
@@ -50,11 +54,29 @@ function EditUser({ user, onCancel }) {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Updated User Data:', formData);
-        // Logic to handle user update would go here
-        if (onCancel) onCancel();
+        setError(null);
+        setLoading(true);
+        try {
+            if (!user || !user.id) throw new Error('User ID is missing');
+            const payload = {
+                full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+                email: formData.email,
+                mobile_no: formData.phone,
+                country_code: formData.countryCode,
+                role: formData.role,
+                status: formData.status.toUpperCase(),
+                password: formData.password || undefined,
+            };
+            await usersApi.update(user.id, payload);
+            alert('User updated successfully!');
+            if (onCancel) onCancel();
+        } catch (err) {
+            setError(err.message || 'Failed to update user');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -65,7 +87,6 @@ function EditUser({ user, onCancel }) {
 
             <div className="form-container">
                 <form className="create-user-form" onSubmit={handleSubmit}>
-                    {/* Photo Upload Section */}
                     <div className="photo-upload-section">
                         <div className="photo-preview-container">
                             {photoPreview ? (
@@ -90,7 +111,6 @@ function EditUser({ user, onCancel }) {
                     </div>
 
                     <div className="form-grid">
-                        {/* Left Column */}
                         <div className="form-column">
                             <div className="form-group">
                                 <label>First Name</label>
@@ -119,9 +139,8 @@ function EditUser({ user, onCancel }) {
                             <div className="form-group">
                                 <label>Role</label>
                                 <select name="role" value={formData.role} onChange={handleChange} required>
-                                    <option value="Admin">Admin</option>
-                                    <option value="Manager">User</option>
-
+                                    <option value="ADMIN">Admin</option>
+                                    <option value="USER">User</option>
                                 </select>
                             </div>
 
@@ -137,7 +156,6 @@ function EditUser({ user, onCancel }) {
                             </div>
                         </div>
 
-                        {/* Right Column */}
                         <div className="form-column">
                             <div className="form-group">
                                 <label>Last Name</label>
@@ -153,21 +171,44 @@ function EditUser({ user, onCancel }) {
 
                             <div className="form-group">
                                 <label>Phone Number</label>
-                                <input
-                                    type="tel"
-                                    name="phone"
-                                    placeholder="Enter phone number"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                />
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <select
+                                        name="countryCode"
+                                        value={formData.countryCode}
+                                        onChange={handleChange}
+                                        style={{ width: '16.1vh' }}
+                                    >
+                                        <option value="+91">+91 (IN)</option>
+                                        <option value="+1">+1 (US)</option>
+                                        <option value="+44">+44 (UK)</option>
+                                        <option value="+61">+61 (AU)</option>
+                                        <option value="+81">+81 (JP)</option>
+                                        <option value="+49">+49 (DE)</option>
+                                        <option value="+971">+971 (UAE)</option>
+                                        <option value="+86">+86 (CN)</option>
+                                        <option value="+33">+33 (FR)</option>
+                                        <option value="+39">+39 (IT)</option>
+                                    </select>
+                                    <input
+                                        type="tel"
+                                        name="phone"
+                                        placeholder="Enter phone number"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        style={{ flex: 1 }}
+                                    />
+                                </div>
                             </div>
-
-                            <div className="form-group">
-                                <label>Status</label>
-                                <select name="status" value={formData.status} onChange={handleChange}>
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
-                                </select>
+                              <div className="form-group">
+                                <label>Company Name</label>
+                                <input
+                                    type="text"
+                                    name="companyName"
+                                    placeholder="Enter company name"
+                                    value={formData.companyName}
+                                    onChange={handleChange}
+                                
+                                />
                             </div>
 
                             <div className="form-group">
@@ -184,8 +225,11 @@ function EditUser({ user, onCancel }) {
                     </div>
 
                     <div className="form-actions">
-                        <button type="button" className="secondary-btn" onClick={onCancel}>Cancel</button>
-                        <button type="submit" className="primary-btn">Update User</button>
+                        {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
+                        <button type="button" className="secondary-btn" onClick={onCancel} disabled={loading}>Cancel</button>
+                        <button type="submit" className="primary-btn" disabled={loading}>
+                            {loading ? 'Updating...' : 'Update User'}
+                        </button>
                     </div>
                 </form>
             </div>
@@ -195,4 +239,3 @@ function EditUser({ user, onCancel }) {
 
 
 export default EditUser;
-
