@@ -7,7 +7,7 @@ function unwrapError(err) {
 export const authApi = {
   async login({ email, password }) {
     try {
-      const { data } = await httpClient.post('/auth/login', { email, password });
+      const { data } = await httpClient.post('/api/auth/login', { email, password });
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -15,7 +15,7 @@ export const authApi = {
   },
   async me() {
     try {
-      const { data } = await httpClient.get('/auth/me');
+      const { data } = await httpClient.get('/api/auth/me');
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -26,7 +26,7 @@ export const authApi = {
 export const usersApi = {
   async list() {
     try {
-      const { data } = await httpClient.get('/users');
+      const { data } = await httpClient.get('/api/users');
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -34,7 +34,7 @@ export const usersApi = {
   },
   async create(payload) {
     try {
-      const { data } = await httpClient.post('/users', payload);
+      const { data } = await httpClient.post('/api/users', payload);
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -42,7 +42,7 @@ export const usersApi = {
   },
   async update(id, payload) {
     try {
-      const { data } = await httpClient.put(`/users/${id}`, payload);
+      const { data } = await httpClient.put(`/api/users/${id}`, payload);
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -50,7 +50,7 @@ export const usersApi = {
   },
   async remove(id) {
     try {
-      await httpClient.delete(`/users/${id}`);
+      await httpClient.delete(`/api/users/${id}`);
       return true;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -61,7 +61,7 @@ export const usersApi = {
 export const permissionsApi = {
   async list() {
     try {
-      const { data } = await httpClient.get('/permissions');
+      const { data } = await httpClient.get('/api/permissions');
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -69,7 +69,7 @@ export const permissionsApi = {
   },
   async getByUserId(userId) {
     try {
-      const { data } = await httpClient.get(`/permissions/${userId}`);
+      const { data } = await httpClient.get(`/api/permissions/${userId}`);
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -77,7 +77,7 @@ export const permissionsApi = {
   },
   async updateByUserId(userId, payload) {
     try {
-      const { data } = await httpClient.put(`/permissions/${userId}`, payload);
+      const { data } = await httpClient.put(`/api/permissions/${userId}`, payload);
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -85,7 +85,7 @@ export const permissionsApi = {
   },
   async resetDefaults(userId, role) {
     try {
-      const { data } = await httpClient.post(`/permissions/${userId}/reset-defaults`, { role });
+      const { data } = await httpClient.post(`/api/permissions/${userId}/reset-defaults`, { role });
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -96,7 +96,7 @@ export const permissionsApi = {
 export const alertRulesApi = {
   async list() {
     try {
-      const { data } = await httpClient.get('/alert-rules');
+      const { data } = await httpClient.get('/api/alerts/rules');
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -104,7 +104,7 @@ export const alertRulesApi = {
   },
   async create(payload) {
     try {
-      const { data } = await httpClient.post('/alert-rules', payload);
+      const { data } = await httpClient.post('/api/alerts/rules', payload);
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -112,7 +112,7 @@ export const alertRulesApi = {
   },
   async update(id, payload) {
     try {
-      const { data } = await httpClient.put(`/alert-rules/${id}`, payload);
+      const { data } = await httpClient.put(`/api/alerts/rules/${id}`, payload);
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -120,7 +120,7 @@ export const alertRulesApi = {
   },
   async remove(id) {
     try {
-      await httpClient.delete(`/alert-rules/${id}`);
+      await httpClient.delete(`/api/alerts/rules/${id}`);
       return true;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -134,7 +134,7 @@ export const alertsApi = {
       const params = { page, limit };
       if (start) params.start = start;
       if (end) params.end = end;
-      const { data } = await httpClient.get('/alerts', { params });
+      const { data } = await httpClient.get('/api/alerts', { params });
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -149,7 +149,7 @@ export const eventRecordsApi = {
       if (meterId) params.meterId = meterId;
       if (start) params.start = start;
       if (end) params.end = end;
-      const { data } = await httpClient.get('/event-records', { params });
+      const { data } = await httpClient.get('/api/events/records', { params });
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -164,7 +164,7 @@ export const energyReadingsApi = {
       if (deviceId) params.deviceId = deviceId;
       if (start) params.start = start;
       if (end) params.end = end;
-      const { data } = await httpClient.get('/energy-readings', { params });
+      const { data } = await httpClient.get('/api/energy/readings', { params });
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));
@@ -177,7 +177,7 @@ export const energyReadingsApi = {
       if (start) params.start = start;
       if (end) params.end = end;
       if (costPerKwh !== undefined) params.costPerKwh = costPerKwh;
-      const { data } = await httpClient.get('/energy-readings/kpi', { params });
+      const { data } = await httpClient.get('/api/energy/readings/kpi', { params });
       return data;
     } catch (err) {
       throw new Error(unwrapError(err));

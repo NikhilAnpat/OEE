@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Power_Quality_Header from "./Power_Quality_Header";
-import rawData from "../../../services/Data.json";
+import { energyReadingsApi } from "../../../services/oeeBeApi";
 import KiloWatt from "./KiloWatt";
 import VoltageImbalance from "./VoltageImbalance";
 import HourlyEnergyConsumption from "./HourlyEnergyConsumption";
@@ -16,6 +16,40 @@ export default function PowerQualityMonitoring() {
     const [selectedMeter, setSelectedMeter] = useState("meter1");
     const [timeRange, setTimeRange] = useState("6h");
     const [isPrinting, setIsPrinting] = useState(false);
+    const [rawData, setRawData] = useState([]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const normalizeRow = (row) => {
+            const raw = row?.raw && typeof row.raw === 'object' ? row.raw : {};
+            return {
+                ...raw,
+                ts: row?.ts || raw.ts,
+                DeviceId: row?.deviceId || raw.DeviceId,
+                deviceId: row?.deviceId || raw.deviceId,
+            };
+        };
+
+        const load = async () => {
+            try {
+                const rows = await energyReadingsApi.list({ limit: 5000 });
+                if (cancelled) return;
+                setRawData(Array.isArray(rows) ? rows.map(normalizeRow) : []);
+            } catch (e) {
+                if (cancelled) return;
+                setRawData([]);
+                console.error('Failed to load energy readings:', e);
+            }
+        };
+
+        load();
+        const t = setInterval(load, 60_000);
+        return () => {
+            cancelled = true;
+            clearInterval(t);
+        };
+    }, []);
 
     const toggleTheme = () => {
         setTheme((prev) => (prev === "light" ? "dark" : "light"));
