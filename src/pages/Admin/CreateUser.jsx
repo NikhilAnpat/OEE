@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import './Admin.css';
-import { usersApi } from '../../services/oeeBeApi';
 
 function CreateUser({ onCancel }) {
     const [formData, setFormData] = useState({
@@ -8,7 +7,6 @@ function CreateUser({ onCancel }) {
         lastName: '',
         email: '',
         phone: '',
-        countryCode: '+91',
         role: 'Admin',
         status: 'Active',
         password: '',
@@ -16,7 +14,6 @@ function CreateUser({ onCancel }) {
     });
 
     const [photoPreview, setPhotoPreview] = useState(null);
-    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -34,40 +31,11 @@ function CreateUser({ onCancel }) {
         }
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
-
-        if (formData.password !== formData.confirmPassword) {
-            alert("Passwords do not match!");
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const payload = {
-                user_name: formData.firstName.toLowerCase() + (Math.floor(Math.random() * 1000)),
-                email: formData.email,
-                password: formData.password,
-                role: formData.role === 'Manager' ? 'USER' : formData.role.toUpperCase(),
-                status: formData.status.toUpperCase(),
-                full_name: `${formData.firstName} ${formData.lastName}`,
-                company_name: formData.companyName || "OEE",
-                mobile_no: formData.phone,
-                country_code: formData.countryCode,
-                photo: null
-            };
-            console.log('Creating User with payload:', payload);
-
-            await usersApi.create(payload);
-
-            alert('User created successfully!');
-            if (onCancel) onCancel();
-        } catch (error) {
-            console.error('Failed to create user:', error);
-            alert(`Failed to create user: ${error.message}`);
-        } finally {
-            setLoading(false);
-        }
+        console.log('User Data:', formData);
+        // Logic to handle user creation would go here
+        if (onCancel) onCancel();
     };
 
     return (
@@ -78,6 +46,7 @@ function CreateUser({ onCancel }) {
 
             <div className="form-container">
                 <form className="create-user-form" onSubmit={handleSubmit}>
+                    {/* Photo Upload Section */}
                     <div className="photo-upload-section">
                         <div className="photo-preview-container">
                             {photoPreview ? (
@@ -102,6 +71,7 @@ function CreateUser({ onCancel }) {
                     </div>
 
                     <div className="form-grid">
+                        {/* Left Column */}
                         <div className="form-column">
                             <div className="form-group">
                                 <label>First Name</label>
@@ -127,7 +97,6 @@ function CreateUser({ onCancel }) {
                                 />
                             </div>
 
-
                             <div className="form-group">
                                 <label>Role</label>
                                 <select name="role" value={formData.role} onChange={handleChange} required>
@@ -150,6 +119,7 @@ function CreateUser({ onCancel }) {
                             </div>
                         </div>
 
+                        {/* Right Column */}
                         <div className="form-column">
                             <div className="form-group">
                                 <label>Last Name</label>
@@ -165,45 +135,21 @@ function CreateUser({ onCancel }) {
 
                             <div className="form-group">
                                 <label>Phone Number</label>
-                                <div style={{ display: 'flex', gap: 8 }}>
-                                    <select
-                                        name="countryCode"
-                                        value={formData.countryCode}
-                                        onChange={handleChange}
-                                        style={{ width: '16.1vh' }}
-                                    >
-                                        <option value="+91">+91 (IN)</option>
-                                        <option value="+1">+1 (US)</option>
-                                        <option value="+44">+44 (UK)</option>
-                                        <option value="+61">+61 (AU)</option>
-                                        <option value="+81">+81 (JP)</option>
-                                        <option value="+49">+49 (DE)</option>
-                                        <option value="+971">+971 (UAE)</option>
-                                        <option value="+86">+86 (CN)</option>
-                                        <option value="+33">+33 (FR)</option>
-                                        <option value="+39">+39 (IT)</option>
-                                    </select>
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        placeholder="Enter phone number"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        required
-                                        style={{ flex: 1 }}
-                                    />
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label>Company Name</label>
                                 <input
-                                    type="text"
-                                    name="companyName"
-                                    placeholder="Enter company name"
-                                    value={formData.companyName}
+                                    type="tel"
+                                    name="phone"
+                                    placeholder="Enter phone number"
+                                    value={formData.phone}
                                     onChange={handleChange}
-                                    required
                                 />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Status</label>
+                                <select name="status" value={formData.status} onChange={handleChange}>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
                             </div>
 
                             <div className="form-group">
@@ -217,21 +163,19 @@ function CreateUser({ onCancel }) {
                                     required
                                 />
                             </div>
-
                         </div>
                     </div>
 
                     <div className="form-actions">
-                        <button type="button" className="secondary-btn" onClick={onCancel} disabled={loading}>Cancel</button>
-                        <button type="submit" className="primary-btn" disabled={loading}>
-                            {loading ? 'Creating...' : 'Create User'}
-                        </button>
+                        <button type="button" className="secondary-btn" onClick={onCancel}>Cancel</button>
+                        <button type="submit" className="primary-btn">Create User</button>
                     </div>
                 </form>
             </div>
         </div>
     );
 }
+
 
 export default CreateUser;
 
